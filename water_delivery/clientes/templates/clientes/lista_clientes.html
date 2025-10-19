@@ -225,7 +225,7 @@
                                                class="action-btn {% if cliente.activo %}disable-btn{% else %}enable-btn{% endif %}"
                                                data-bs-toggle="tooltip"
                                                title="{% if cliente.activo %}Deshabilitar{% else %}Habilitar{% endif %}"
-                                               onclick="return showConfirmModal(this, '{{ cliente.activo|yesno:'Deshabilitar,Habilitar' }}', event)">
+                                               onclick="event.preventDefault(); showConfirmModal(this, '{% if cliente.activo %}Deshabilitar{% else %}Habilitar{% endif %}', event)">
                                                 <i class="fas fa-{% if cliente.activo %}user-slash{% else %}user-check{% endif %}"></i>
                                             </a>
                                         </div>
@@ -252,17 +252,13 @@
                         </h4>
                         <p class="text-muted mb-4 lead text-sm sm:text-base">
                             {% if request.GET.buscar or request.GET.filtro %}
-                                Intenta con otros términos de búsqueda o verifica los filtros aplicados
+                                Intenta con otros términos de búsqueda o <a href="{% url 'clientes:lista_clientes' %}" class="text-agua-blue">ver todos los clientes</a>
                             {% else %}
-                                Comienza agregando tu primer cliente para gestionar tu negocio
+                                <a href="{% url 'clientes:crear_cliente' %}" class="btn btn-agua-primary">
+                                    <i class="fas fa-plus me-2"></i>Agregar Cliente
+                                </a>
                             {% endif %}
                         </p>
-                        {% if not request.GET.buscar and not request.GET.filtro %}
-                        <a href="{% url 'clientes:nuevo_cliente' %}" class="btn btn-agua-blue btn-lg px-4 w-full sm:w-auto">
-                            <i class="fas fa-plus me-2"></i>
-                            Agregar Primer Cliente
-                        </a>
-                        {% endif %}
                     </div>
                 </div>
                 {% endif %}
@@ -279,10 +275,10 @@
       </div>
       <h3 class="text-lg font-bold text-agua-dark" id="confirm-modal-title">Confirmar acción</h3>
     </div>
-    <p class="text-gray-700 mb-6" id="confirm-modal-message">¿Estás seguro de que deseas continuar?</p>
+    <p class="text-gray-700 mb-6" id="modal-text">¿Estás seguro de que deseas continuar?</p>
     <div class="flex justify-end gap-2">
       <button onclick="closeConfirmModal()" class="px-4 py-2 rounded bg-gray-200 text-gray-700 hover:bg-gray-300">Cancelar</button>
-      <a id="confirm-modal-accept" href="#" class="px-4 py-2 rounded bg-agua-blue text-white hover:bg-agua-dark font-semibold transition">Sí, continuar</a>
+      <a id="confirm-action" href="#" class="px-4 py-2 rounded bg-agua-blue text-white hover:bg-agua-dark font-semibold transition">Sí, continuar</a>
     </div>
   </div>
 </div>
@@ -403,11 +399,6 @@
     font-size: 16px;
     text-transform: uppercase;
     box-shadow: 0 2px 8px rgba(8, 145, 178, 0.3);
-}
-
-.inactive-avatar {
-    background: linear-gradient(135deg, #9ca3af, #6b7280);
-    box-shadow: 145,178,0.3);
 }
 
 .inactive-avatar {
@@ -922,31 +913,35 @@ document.addEventListener('DOMContentLoaded', function() {
 });
 
 function focusSearch() {
-    if (window.location.pathname === "{% url 'clientes:lista_clientes' %}") {
-        const searchInput = document.querySelector('input[name="buscar"]');
-        if (searchInput) {
-            searchInput.focus();
-        }
-    }
-}
-
-if (window.location.hash === '#search') {
     const searchInput = document.querySelector('input[name="buscar"]');
     if (searchInput) {
         searchInput.focus();
     }
 }
 
+document.addEventListener('DOMContentLoaded', function() {
+    if (window.location.hash === '#search') {
+        const searchInput = document.querySelector('input[name="buscar"]');
+        if (searchInput) {
+            searchInput.focus();
+        }
+    }
+});
+
 function showConfirmModal(link, accion, event) {
   event.preventDefault();
   const modal = document.getElementById('confirm-modal');
-  const acceptBtn = document.getElementById('confirm-modal-accept');
-  const message = document.getElementById('confirm-modal-message');
-  message.textContent = `¿Estás seguro de que deseas ${accion.toLowerCase()} este cliente?`;
-  acceptBtn.href = link.href;
+  const confirmBtn = document.getElementById('confirm-action');
+  
+  document.getElementById('modal-text').textContent = `¿Estás seguro que deseas ${accion.toLowerCase()} este cliente?`;
+  
+  confirmBtn.onclick = function() {
+    window.location.href = link.href;
+  };
+  
   modal.classList.remove('hidden');
-  return false;
 }
+
 function closeConfirmModal() {
   document.getElementById('confirm-modal').classList.add('hidden');
 }
