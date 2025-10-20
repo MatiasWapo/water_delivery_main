@@ -18,9 +18,10 @@
 from pathlib import Path
 import os 
 from decouple import config
+from urllib.parse import urlparse, urlunparse, parse_qsl, urlencode
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(__file__).resolve().parent.parent
+BASE_DIR = Path(_file_).resolve().parent.parent
 
 # =====================
 # Seguridad y rutas
@@ -28,8 +29,14 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # SECRET_KEY, DEBUG, ALLOWED_HOSTS
 # Security settings (¡OJO! Cambiar en producción)
 SECRET_KEY = config('SECRET_KEY', default='django-insecure-a!d5f&34%4n*2^4c*&6^0v2d=*c0x)$j-o#mvde^7odl4p2mi-')
-DEBUG = config('DEBUG', default=False, cast=bool)
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost,127.0.0.1,192.168.154.204').split(',')
+DEBUG = False
+ALLOWED_HOSTS = [
+    'ns.inversioneslos2ramirez.com', 
+    'inversioneslos2ramirez.com',
+    '84.247.168.85',
+    'localhost',
+    '127.0.0.1'
+]
 
 # =====================
 # Apps instaladas
@@ -42,6 +49,7 @@ INSTALLED_APPS = [
     'django.contrib.sessions',
     'django.contrib.messages',
     'django.contrib.staticfiles',
+    'corsheaders',
     'crispy_forms',
     'crispy_bootstrap5',
     'clientes',
@@ -71,6 +79,7 @@ LOGOUT_REDIRECT_URL = 'usuarios:login'
 # Middleware
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
+    'corsheaders.middleware.CorsMiddleware',  # CORS debe ir lo más arriba posible
     'whitenoise.middleware.WhiteNoiseMiddleware',  # Para servir archivos estáticos
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -79,7 +88,12 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'usuarios.middleware.LoginRequiredMiddleware',
+    # Middleware de seguridad para acceso privado (solo en producción)
+    'water_delivery.security.IPRestrictionMiddleware' if not DEBUG else None,
+    # Middleware de control por dispositivo basado en base de datos
+    'usuarios.middleware.DeviceDBMiddleware',
 ]
+MIDDLEWARE = [m for m in MIDDLEWARE if m is not None]
 
 ROOT_URLCONF = 'water_delivery.urls'
 
@@ -108,14 +122,37 @@ WSGI_APPLICATION = 'water_delivery.wsgi.application'
 # Base de datos
 # =====================
 # Database
+import dj_database_url
+
+# Configuración de base de datos
+# Si existe DATABASE_URL/RAILWAY_DATABASE_URL/POSTGRES_URL (para Railway), la usa; si no, usa PostgreSQL local
+DATABASE_URL = config('DATABASE_URL', default=None) or \
+               config('RAILWAY_DATABASE_URL', default=None) or \
+               config('POSTGRES_URL', default=None)
+
+def _ensure_sslmode(url: str) -> str:
+    try:
+        parsed = urlparse(url)
+        # Solo aplicar para postgres
+        if parsed.scheme.startswith('postgres'):
+            query = dict(parse_qsl(parsed.query))
+            if 'sslmode' not in query:
+                query['sslmode'] = 'require'
+                new_query = urlencode(query)
+                return urlunparse(parsed._replace(query=new_query))
+    except Exception:
+        pass
+    return url
+
+# Configuración de la base de datos para VPS Ubuntu
 DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": "water_delivery_db",
-        "USER": "postgres",
-        "PASSWORD": "matias123",
-        "HOST": "127.0.0.1",
-        "PORT": "5432",
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'water_delivery_db',
+        'USER': 'postgres',
+        'PASSWORD': 'matias123',
+        'HOST': '127.0.0.1',
+        'PORT': '5432',
     }
 }
 
@@ -155,8 +192,18 @@ USE_TZ = True
 # =====================
 # Static files
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
-STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATIC_ROOT = '/opt/water_delivery_main/static/'
+
+# Media files
+MEDIA_URL = '/media/'
+MEDIA_ROOT = '/opt/water_delivery_main/media/'
+
+# =====================
+# CORS
+# =====================
+# Configuración de CORS para permitir frontends externos si aplica
+CORS_ALLOWED_ORIGINS = [o for o in config('CORS_ALLOWED_ORIGINS', default='').split(',') if o]
+CORS_ALLOW_CREDENTIALS = True
 
 # Default primary key
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
@@ -164,17 +211,20 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 # =====================
 # Email y seguridad
 # =====================
-# Email Configuration (Development)
+# Email Configuration (Development/Production)
 EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
-EMAIL_HOST = 'smtp.gmail.com'
-EMAIL_PORT = 587
-EMAIL_USE_TLS = True
-EMAIL_HOST_USER = 'matiasmartimez15@gmail.com'  # Cambiar por tu email real
-EMAIL_HOST_PASSWORD = 'cezh kyul uxeo nnij'  # Usar contraseña de aplicación
-DEFAULT_FROM_EMAIL = 'matiasmartimez15@gmail.com'  # Debe coincidir con EMAIL_HOST_USER
+EMAIL_HOST = config('EMAIL_HOST', default='smtp.gmail.com')
+EMAIL_PORT = config('EMAIL_PORT', default=587, cast=int)
+EMAIL_USE_TLS = config('EMAIL_USE_TLS', default=True, cast=bool)
+EMAIL_HOST_USER = config('EMAIL_HOST_USER', default='')
+EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
+DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default=EMAIL_HOST_USER)
 PASSWORD_RESET_TIMEOUT = 86400  # 24 horas en segundos para expiración del token
 
 # Security recommendations (para cuando DEBUG=False)
-SESSION_COOKIE_SECURE = False  # Cambiar a True en producción
-CSRF_COOKIE_SECURE = False     # Cambiar a True en producción
-SECURE_SSL_REDIRECT = False    # Cambiar a True en producción
+SESSION_COOKIE_SECURE = config('SESSION_COOKIE_SECURE', default=False, cast=bool)
+CSRF_COOKIE_SECURE = config('CSRF_COOKIE_SECURE', default=False, cast=bool)
+SECURE_SSL_REDIRECT = config('SECURE_SSL_REDIRECT', default=False, cast=bool)
+CSRF_TRUSTED_ORIGINS = [o for o in config('CSRF_TRUSTED_ORIGINS', default='').split(',') if o]
+SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+USE_X_FORWARDED_HOST = True
