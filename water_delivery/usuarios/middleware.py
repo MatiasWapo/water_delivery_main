@@ -23,6 +23,7 @@ class LoginRequiredMiddleware:
     def __call__(self, request):
         # URLs que NO requieren login (páginas públicas)
         exempt_paths = [
+            '/',  # Raíz del sitio
             '/usuarios/login/',
             '/usuarios/register/',
             '/usuarios/recuperar/',
@@ -31,6 +32,7 @@ class LoginRequiredMiddleware:
             '/usuarios/device/login/',
             '/usuarios/device/logout/',
             '/static/',
+            '/media/',
         ]
         # Si el usuario no está autenticado y la URL no es pública, redirige al login
         if not request.user.is_authenticated:

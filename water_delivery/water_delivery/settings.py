@@ -21,22 +21,16 @@ from decouple import config
 from urllib.parse import urlparse, urlunparse, parse_qsl, urlencode
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
-BASE_DIR = Path(_file_).resolve().parent.parent
+BASE_DIR = Path(__file__).resolve().parent.parent
 
 # =====================
 # Seguridad y rutas
 # =====================
 # SECRET_KEY, DEBUG, ALLOWED_HOSTS
 # Security settings (¡OJO! Cambiar en producción)
-SECRET_KEY = config('SECRET_KEY', default='django-insecure-a!d5f&34%4n*2^4c*&6^0v2d=*c0x)$j-o#mvde^7odl4p2mi-')
-DEBUG = False
-ALLOWED_HOSTS = [
-    'ns.inversioneslos2ramirez.com', 
-    'inversioneslos2ramirez.com',
-    '84.247.168.85',
-    'localhost',
-    '127.0.0.1'
-]
+SECRET_KEY = 'django-insecure-a!d5f&34%4n*2^4c*&6^0v2d=*c0x)$j-o#mvde^7odl4p2mi-'
+DEBUG = True
+ALLOWED_HOSTS = ['*']  # Para desarrollo local
 
 # =====================
 # Apps instaladas
@@ -77,6 +71,18 @@ LOGOUT_REDIRECT_URL = 'usuarios:login'
 # Middleware
 # =====================
 # Middleware
+# URLs que no requieren autenticación de dispositivo
+LOGIN_EXEMPT_URLS = [
+    '/',
+    '/usuarios/login/',
+    '/usuarios/register/',
+    '/usuarios/recuperar/',
+    '/usuarios/resetear/',
+    '/admin/',
+    '/static/',
+    '/media/',
+]
+
 MIDDLEWARE = [
     'django.middleware.security.SecurityMiddleware',
     'corsheaders.middleware.CorsMiddleware',  # CORS debe ir lo más arriba posible
@@ -88,12 +94,15 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'usuarios.middleware.LoginRequiredMiddleware',
-    # Middleware de seguridad para acceso privado (solo en producción)
-    'water_delivery.security.IPRestrictionMiddleware' if not DEBUG else None,
-    # Middleware de control por dispositivo basado en base de datos
-    'usuarios.middleware.DeviceDBMiddleware',
 ]
-MIDDLEWARE = [m for m in MIDDLEWARE if m is not None]
+
+# Middleware para desarrollo local
+if DEBUG:
+    # Deshabilitar restricciones de dispositivo en desarrollo
+    MIDDLEWARE = [m for m in MIDDLEWARE if m != 'usuarios.middleware.DeviceDBMiddleware']
+else:
+    # En producción, mantener solo las restricciones necesarias
+    MIDDLEWARE.append('water_delivery.security.IPRestrictionMiddleware')
 
 ROOT_URLCONF = 'water_delivery.urls'
 
@@ -124,27 +133,7 @@ WSGI_APPLICATION = 'water_delivery.wsgi.application'
 # Database
 import dj_database_url
 
-# Configuración de base de datos
-# Si existe DATABASE_URL/RAILWAY_DATABASE_URL/POSTGRES_URL (para Railway), la usa; si no, usa PostgreSQL local
-DATABASE_URL = config('DATABASE_URL', default=None) or \
-               config('RAILWAY_DATABASE_URL', default=None) or \
-               config('POSTGRES_URL', default=None)
-
-def _ensure_sslmode(url: str) -> str:
-    try:
-        parsed = urlparse(url)
-        # Solo aplicar para postgres
-        if parsed.scheme.startswith('postgres'):
-            query = dict(parse_qsl(parsed.query))
-            if 'sslmode' not in query:
-                query['sslmode'] = 'require'
-                new_query = urlencode(query)
-                return urlunparse(parsed._replace(query=new_query))
-    except Exception:
-        pass
-    return url
-
-# Configuración de la base de datos para VPS Ubuntu
+# Configuración de base de datos PostgreSQL local
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql',
@@ -179,6 +168,22 @@ AUTH_PASSWORD_VALIDATORS = [
 ]
 
 # =====================
+# Configuración de Email
+# =====================
+# Email configuration
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'matiasmartimez15@gmail.com'
+EMAIL_HOST_PASSWORD = 'matias123'  # Considera usar una contraseña de aplicación para mayor seguridad
+DEFAULT_FROM_EMAIL = 'matiasmartimez15@gmail.com'
+
+# Configuración de seguridad adicional para Gmail
+# Asegúrate de que tu cuenta de Google permita el acceso de aplicaciones menos seguras
+# o mejor aún, configura una contraseña de aplicación en tu cuenta de Google
+
+# =====================
 # Internacionalización
 # =====================
 # Internationalization
@@ -192,11 +197,12 @@ USE_TZ = True
 # =====================
 # Static files
 STATIC_URL = '/static/'
-STATIC_ROOT = '/opt/water_delivery_main/static/'
+STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
 
 # Media files
 MEDIA_URL = '/media/'
-MEDIA_ROOT = '/opt/water_delivery_main/media/'
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # =====================
 # CORS
@@ -221,10 +227,10 @@ EMAIL_HOST_PASSWORD = config('EMAIL_HOST_PASSWORD', default='')
 DEFAULT_FROM_EMAIL = config('DEFAULT_FROM_EMAIL', default=EMAIL_HOST_USER)
 PASSWORD_RESET_TIMEOUT = 86400  # 24 horas en segundos para expiración del token
 
-# Security recommendations (para cuando DEBUG=False)
-SESSION_COOKIE_SECURE = config('SESSION_COOKIE_SECURE', default=False, cast=bool)
-CSRF_COOKIE_SECURE = config('CSRF_COOKIE_SECURE', default=False, cast=bool)
-SECURE_SSL_REDIRECT = config('SECURE_SSL_REDIRECT', default=False, cast=bool)
-CSRF_TRUSTED_ORIGINS = [o for o in config('CSRF_TRUSTED_ORIGINS', default='').split(',') if o]
-SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
-USE_X_FORWARDED_HOST = True
+# Security settings for development
+SESSION_COOKIE_SECURE = False
+CSRF_COOKIE_SECURE = False
+SECURE_SSL_REDIRECT = False
+CSRF_TRUSTED_ORIGINS = []
+SECURE_PROXY_SSL_HEADER = None
+USE_X_FORWARDED_HOST = False
