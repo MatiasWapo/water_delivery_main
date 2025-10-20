@@ -6,7 +6,7 @@
 
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin
-from .models import Usuario
+from .models import Usuario, Device
 
 class UsuarioAdmin(UserAdmin):
     # Lista de campos a mostrar en la tabla principal
@@ -26,18 +26,6 @@ class UsuarioAdmin(UserAdmin):
             ),
         }),
     )
-    
-    # Campos de solo lectura (opcional)
-    readonly_fields = ('get_pregunta_1_display', 'get_pregunta_2_display')
-    
-    # Métodos para mostrar el texto completo de las preguntas de seguridad
-    @admin.display(description='Pregunta 1')
-    def get_pregunta_1_display(self, obj):
-        return obj.get_pregunta_1_display()
-    
-    @admin.display(description='Pregunta 2')
-    def get_pregunta_2_display(self, obj):
-        return obj.get_pregunta_2_display()
 
     @admin.display(description='Tipo Usuario')
     def mostrar_tipo_usuario(self, obj):
@@ -47,3 +35,10 @@ class UsuarioAdmin(UserAdmin):
 
 # Registro del modelo Usuario en el admin
 admin.site.register(Usuario, UsuarioAdmin)
+
+@admin.register(Device)
+class DeviceAdmin(admin.ModelAdmin):
+    list_display = ('name', 'active', 'last_seen', 'created_at')
+    list_filter = ('active',)
+    search_fields = ('name', 'token')
+    readonly_fields = ('token', 'last_seen', 'created_at')

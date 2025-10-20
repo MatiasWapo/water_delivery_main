@@ -62,16 +62,6 @@ class Usuario(AbstractUser):
         blank=True,
         verbose_name="Camión asignado"
     )  # Camión asignado al conductor (opcional)
-    
-    # Campos críticos con valores por defecto
-    password = models.CharField(max_length=128, default='', verbose_name='password')
-    last_login = models.DateTimeField(null=True, blank=True, default=timezone.now)
-    is_active = models.BooleanField(default=True)
-    
-    # Asegura que estos campos no sean nulos
-    email = models.EmailField(verbose_name="Correo electrónico", unique=True, blank=False, default='')
-    direccion = models.TextField(verbose_name="Dirección completa", default="Sin dirección registrada")
-    telefono = models.CharField(max_length=20, verbose_name="Teléfono de contacto", default="0000000000")
 
     class Meta:
         verbose_name = "Usuario del sistema"
@@ -80,3 +70,35 @@ class Usuario(AbstractUser):
     def __str__(self):
         """Representación legible del usuario"""
         return f"{self.username} ({self.get_tipo_usuario_display()})"
+
+
+# =============================================
+# MODELO DE DISPOSITIVO AUTORIZADO
+# =============================================
+import secrets
+
+class Device(models.Model):
+    """
+    Dispositivo autorizado a acceder a la app.
+    La validación se hace mediante un token único que el dispositivo envía
+    en una cookie (DEVICE_TOKEN) o header (X-Device-Token).
+    """
+    name = models.CharField(max_length=100, unique=True)
+    token = models.CharField(max_length=64, unique=True, blank=True)
+    active = models.BooleanField(default=True)
+    last_seen = models.DateTimeField(null=True, blank=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        verbose_name = "Dispositivo autorizado"
+        verbose_name_plural = "Dispositivos autorizados"
+
+    def save(self, *args, **kwargs):
+        # Generar token si está vacío
+        if not self.token:
+            self.token = secrets.token_urlsafe(32)[:64]
+        super().save(*args, **kwargs)
+
+    def __str__(self):
+        estado = 'Activo' if self.active else 'Inactivo'
+        return f"{self.name} - {estado}"

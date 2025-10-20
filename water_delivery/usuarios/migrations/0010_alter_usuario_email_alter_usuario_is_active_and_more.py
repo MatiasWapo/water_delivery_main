@@ -7,7 +7,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('usuarios', '0009_fix_missing_token_recuperacion_fecha'),
+        ('usuarios', '0008_alter_usuario_token_recuperacion'),
     ]
 
     operations = [

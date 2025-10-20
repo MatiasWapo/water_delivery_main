@@ -1,0 +1,56 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Acceso de Dispositivo</title>
+  <link rel="icon" href="{% static 'img/favicon.ico' %}">
+  <script>
+    // Si venimos con ?next=... mantenemos ese valor en el input hidden
+    document.addEventListener('DOMContentLoaded', function () {
+      const params = new URLSearchParams(window.location.search);
+      const nextVal = params.get('next');
+      if (nextVal) {
+        const hidden = document.getElementById('next');
+        if (hidden) hidden.value = nextVal;
+      }
+    });
+  </script>
+  <style>
+    body { font-family: ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica Neue, Arial; background: #f8fafc; margin: 0; }
+    .container { max-width: 420px; margin: 7vh auto; background: #fff; border-radius: 12px; box-shadow: 0 10px 25px rgba(0,0,0,0.06); padding: 28px; }
+    h1 { margin: 0 0 8px; font-size: 1.35rem; color: #0f172a; }
+    p.desc { margin: 0 0 18px; color: #475569; font-size: .95rem; }
+    .field { display: flex; flex-direction: column; gap: 6px; margin-bottom: 16px; }
+    label { color: #334155; font-weight: 600; font-size: .92rem; }
+    input[type="text"] { padding: 12px 14px; border: 1px solid #cbd5e1; border-radius: 10px; outline: none; font-size: .95rem; }
+    input[type="text"]:focus { border-color: #0ea5e9; box-shadow: 0 0 0 3px rgba(14,165,233,0.15); }
+    .btn { width: 100%; padding: 12px 14px; background: #0ea5e9; color: white; border: none; border-radius: 10px; font-weight: 700; cursor: pointer; font-size: .98rem; }
+    .btn:hover { background: #0284c7; }
+    .error { background: #fee2e2; border: 1px solid #ef4444; color: #7f1d1d; padding: 10px 12px; border-radius: 10px; font-size: .92rem; margin-bottom: 14px; }
+    .hint { color: #64748b; font-size: .85rem; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Acceso de Dispositivo</h1>
+    <p class="desc">Ingresa el token de dispositivo provisto por la empresa para habilitar el acceso.</p>
+
+    {% if error %}
+      <div class="error">{{ error }}</div>
+    {% endif %}
+
+    <form method="post">
+      {% csrf_token %}
+      <input type="hidden" id="next" name="next" value="{{ next|default:'' }}">
+      <div class="field">
+        <label for="token">Token de dispositivo</label>
+        <input id="token" name="token" type="text" placeholder="pej. 9c2f3..." required />
+        <div class="hint">Este token identifica tu equipo. No lo compartas.</div>
+      </div>
+      <button class="btn" type="submit">Activar dispositivo</button>
+    </form>
+  </div>
+</body>
+</html>

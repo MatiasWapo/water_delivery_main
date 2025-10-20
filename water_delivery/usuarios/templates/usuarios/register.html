@@ -1,422 +1,483 @@
-{% extends 'base.html' %}
-{% load static %}
-{% load crispy_forms_tags %}
-
-{% block title %}Registro{% endblock %}
-
-{% block navbar %}{% endblock %}
-
-{% block content %}
-
-{% if messages %}
-<div class="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-md px-4">
-    {% for message in messages %}
-    <div class="alert alert-{{ message.tags }} p-4 mb-4 rounded-lg shadow-lg 
-                {% if message.tags == 'error' %}bg-red-100 text-red-800 border-l-4 border-red-500
-                {% else %}bg-green-100 text-green-800 border-l-4 border-green-500{% endif %}">
-        <div class="flex items-center">
-            <i class="fas {% if message.tags == 'error' %}fa-exclamation-circle{% else %}fa-check-circle{% endif %} mr-2"></i>
-            {{ message }}
-        </div>
-    </div>
-    {% endfor %}
-</div>
-{% endif %}
-
-<div id="register-toast" class="fixed top-6 left-1/2 transform -translate-x-1/2 z-50 hidden w-full max-w-xs bg-red-100 text-red-800 border-l-4 border-red-500 p-4 rounded-lg shadow-lg text-center"></div>
-
-<div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-agua-light/20 to-agua-blue/30">
-    <div class="max-w-4xl w-full space-y-8">
-        <div class="text-center">
-            <div class="mx-auto flex justify-center">
-                <div class="bg-white p-3 rounded-full shadow-lg border-2 border-agua-blue">
-                    <i class="fas fa-tint text-agua-blue text-3xl"></i>
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Delivery de Agua - Registro</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    {% load static %}
+    {% load crispy_forms_tags %}
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        'agua-blue': '#0891b2',
+                        'agua-light': '#67e8f9',
+                        'agua-dark': '#164e63',
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50 min-h-screen flex flex-col">
+    <!-- Header simplificado solo para registro -->
+    <header class="bg-gradient-to-r from-cyan-500 to-blue-400 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2">
+            <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2 md:gap-0">
+                <div class="flex items-center gap-4 min-w-0">
+                    <div class="bg-white p-1 rounded-full shadow-md flex items-center justify-center overflow-hidden border-4 border-white" style="width: 70px; height: 70px;">
+                        <img src="{% static 'img/logo empresa.jpeg' %}"
+                             alt="Logo Inversiones Ramírez"
+                             class="w-14 h-14 object-contain rounded-full bg-white"
+                             style="box-shadow: 0 2px 8px rgba(8,145,178,0.10);">
+                    </div>
+                    <div class="text-white flex flex-col justify-center">
+                        <h1 class="text-xl md:text-2xl font-bold uppercase leading-tight">INVERSIONES RAMIREZ C.A.</h1>
+                        <p class="text-xs md:text-sm text-blue-100">RIF: J-29535312-0</p>
+                    </div>
+                </div>
+                <div class="flex flex-col md:items-end gap-2 order-2 md:order-3 min-w-fit">
+                    <div class="flex flex-row md:flex-col items-center md:items-end gap-2 md:gap-1">
+                        <div class="flex items-center gap-2">
+                            <a href="#" onclick="showSoporteModal(event)" class="flex items-center gap-1 px-3 py-1 rounded bg-agua-light hover:bg-agua-blue text-agua-dark hover:text-white font-semibold shadow transition text-xs">
+                                <i class="fas fa-envelope"></i> Soporte
+                            </a>
+                            <div class="flex items-center gap-2 text-sm text-white font-semibold">
+                                <i class="fas fa-clock"></i>
+                                <span id="header-fecha-hora">Cargando fecha y hora...</span>
+                            </div>
+                        </div>
+                        <span class="inline-block mt-0 md:mt-1">
+                            <span class="px-3 py-1 rounded bg-green-500 text-white font-semibold text-xs shadow">● Sistema Activo</span>
+                        </span>
+                    </div>
                 </div>
             </div>
-            <h2 class="mt-6 text-3xl font-bold text-agua-dark">
-                Water Delivery
-            </h2>
-            <p class="mt-2 text-sm text-agua-blue">
-                Crear nueva cuenta
-            </p>
         </div>
+        
+        <div class="h-1 bg-gradient-to-r from-blue-400 via-cyan-300 to-blue-500"></div>
+    </header>
 
-        <div class="bg-white rounded-xl shadow-xl overflow-hidden border border-agua-light/30">
-            <div class="bg-gradient-to-r from-agua-light to-agua-blue py-3 px-6">
-                <h3 class="text-lg font-semibold text-white">
-                    <i class="fas fa-user-plus mr-2"></i>
-                    Formulario de Registro
-                </h3>
+    <!-- Contenido principal -->
+    <main class="flex-1">
+        {% if messages %}
+        <div class="fixed top-20 left-1/2 transform -translate-x-1/2 z-50 w-full max-w-md px-4">
+            {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} p-4 mb-4 rounded-lg shadow-lg 
+                        {% if message.tags == 'error' %}bg-red-100 text-red-800 border-l-4 border-red-500
+                        {% else %}bg-green-100 text-green-800 border-l-4 border-green-500{% endif %}">
+                <div class="flex items-center">
+                    <i class="fas {% if message.tags == 'error' %}fa-exclamation-circle{% else %}fa-check-circle{% endif %} mr-2"></i>
+                    {{ message }}
+                </div>
             </div>
-            
-            <div class="p-6">
-                <form method="post" class="space-y-6" id="registerForm">
-                    {% csrf_token %}
+            {% endfor %}
+        </div>
+        {% endif %}
+
+        <div id="register-toast" class="fixed top-6 left-1/2 transform -translate-x-1/2 z-50 hidden w-full max-w-xs bg-red-100 text-red-800 border-l-4 border-red-500 p-4 rounded-lg shadow-lg text-center"></div>
+
+        <div class="min-h-screen flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8 bg-gradient-to-br from-agua-light/20 to-agua-blue/30">
+            <div class="max-w-4xl w-full space-y-8">
+                <div class="text-center">
+                    <div class="mx-auto flex justify-center">
+                        <div class="bg-white p-3 rounded-full shadow-lg border-2 border-agua-blue">
+                            <i class="fas fa-tint text-agua-blue text-3xl"></i>
+                        </div>
+                    </div>
+                    <h2 class="mt-6 text-3xl font-bold text-agua-dark">
+                        Water Delivery
+                    </h2>
+                    <p class="mt-2 text-sm text-agua-blue">
+                        Crear nueva cuenta
+                    </p>
+                </div>
+
+                <div class="bg-white rounded-xl shadow-xl overflow-hidden border border-agua-light/30">
+                    <div class="bg-gradient-to-r from-agua-light to-agua-blue py-3 px-6">
+                        <h3 class="text-lg font-semibold text-white">
+                            <i class="fas fa-user-plus mr-2"></i>
+                            Formulario de Registro
+                        </h3>
+                    </div>
                     
-                    {% if form.non_field_errors %}
-                    <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6">
-                        {% for error in form.non_field_errors %}
-                            <p>{{ error }}</p>
-                        {% endfor %}
-                    </div>
-                    {% endif %}
-
-                    <div class="border-b border-agua-light/30 pb-6">
-                        <h4 class="text-md font-medium text-agua-dark mb-6 flex items-center">
-                            <i class="fas fa-user-circle mr-3 text-agua-blue"></i>
-                            Información Personal
-                        </h4>
-                        
-                        <div class="grid md:grid-cols-2 gap-6">
-                            <div class="form-field">
-                                <label for="{{ form.username.id_for_label }}" class="block text-sm font-medium text-agua-dark mb-2">
-                                    <i class="fas fa-user mr-2 text-agua-blue"></i>
-                                    Nombre de usuario
-                                </label>
-                                <div class="relative">
-                                    <input type="text" 
-                                           id="{{ form.username.id_for_label }}" 
-                                           name="{{ form.username.name }}"
-                                           value="{{ form.username.value|default:'' }}"
-                                           placeholder="Ej: juan_perez"
-                                           class="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-agua-blue focus:border-transparent placeholder-gray-400 transition-all duration-200 pl-12">
-                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                        <i class="fas fa-user text-gray-400"></i>
-                                    </div>
-                                </div>
-                                {% if form.username.errors %}
-                                    <div class="text-red-500 text-sm mt-2 bg-red-50 border border-red-200 rounded-md p-2">
-                                        {% for error in form.username.errors %}
-                                            <p><i class="fas fa-exclamation-circle mr-1"></i>{{ error }}</p>
-                                        {% endfor %}
-                                    </div>
-                                {% else %}
-                                    <p class="text-gray-500 text-xs mt-1">Requerido. 4-150 caracteres. Letras, números y @/./+/-/_ solamente.</p>
-                                {% endif %}
+                    <div class="p-6">
+                        <form method="post" class="space-y-6" id="registerForm">
+                            {% csrf_token %}
+                            
+                            {% if form.non_field_errors %}
+                            <div class="bg-red-100 border-l-4 border-red-500 text-red-700 p-4 mb-6">
+                                {% for error in form.non_field_errors %}
+                                    <p>{{ error }}</p>
+                                {% endfor %}
                             </div>
-
-                            <div class="form-field">
-                                <label for="{{ form.email.id_for_label }}" class="block text-sm font-medium text-agua-dark mb-2">
-                                    <i class="fas fa-envelope mr-2 text-agua-blue"></i>
-                                    Correo electrónico
-                                </label>
-                                <div class="relative">
-                                    <input type="email" 
-                                           id="{{ form.email.id_for_label }}" 
-                                           name="{{ form.email.name }}"
-                                           value="{{ form.email.value|default:'' }}"
-                                           placeholder="tu@email.com"
-                                           class="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-agua-blue focus:border-transparent placeholder-gray-400 transition-all duration-200 pl-12">
-                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                        <i class="fas fa-envelope text-gray-400"></i>
-                                    </div>
-                                </div>
-                                {% if form.email.errors %}
-                                    <div class="text-red-500 text-sm mt-2 bg-red-50 border border-red-200 rounded-md p-2">
-                                        {% for error in form.email.errors %}
-                                            <p><i class="fas fa-exclamation-circle mr-1"></i>{{ error }}</p>
-                                        {% endfor %}
-                                    </div>
-                                {% endif %}
-                            </div>
-                        </div>
-
-                        <div class="grid md:grid-cols-2 gap-6 mt-6">
-                            <div class="form-field">
-                                <label for="{{ form.telefono.id_for_label }}" class="block text-sm font-medium text-agua-dark mb-2">
-                                    <i class="fas fa-phone mr-2 text-agua-blue"></i>
-                                    Teléfono
-                                </label>
-                                <div class="relative">
-                                    <input type="tel" 
-                                           id="{{ form.telefono.id_for_label }}" 
-                                           name="{{ form.telefono.name }}"
-                                           value="{{ form.telefono.value|default:'' }}"
-                                           placeholder="Ej: +1 (555) 123-4567"
-                                           class="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-agua-blue focus:border-transparent placeholder-gray-400 transition-all duration-200 pl-12">
-                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                        <i class="fas fa-phone text-gray-400"></i>
-                                    </div>
-                                </div>
-                                {% if form.telefono.errors %}
-                                    <div class="text-red-500 text-sm mt-2 bg-red-50 border border-red-200 rounded-md p-2">
-                                        {% for error in form.telefono.errors %}
-                                            <p><i class="fas fa-exclamation-circle mr-1"></i>{{ error }}</p>
-                                        {% endfor %}
-                                    </div>
-                                {% endif %}
-                            </div>
-
-                            <div class="form-field">
-                                <label for="{{ form.tipo_usuario.id_for_label }}" class="block text-sm font-medium text-agua-dark mb-2">
-                                    <i class="fas fa-user-tag mr-2 text-agua-blue"></i>
-                                    Tipo de Usuario
-                                </label>
-                                <select id="{{ form.tipo_usuario.id_for_label }}" 
-                                        name="{{ form.tipo_usuario.name }}"
-                                        class="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-agua-blue focus:border-transparent transition-all duration-200">
-                                    {% for value, text in form.tipo_usuario.field.choices %}
-                                        <option value="{{ value }}" {% if form.tipo_usuario.value == value %}selected{% endif %}>{{ text }}</option>
-                                    {% endfor %}
-                                </select>
-                                {% if form.tipo_usuario.errors %}
-                                    <div class="text-red-500 text-sm mt-2 bg-red-50 border border-red-200 rounded-md p-2">
-                                        {% for error in form.tipo_usuario.errors %}
-                                            <p><i class="fas fa-exclamation-circle mr-1"></i>{{ error }}</p>
-                                        {% endfor %}
-                                    </div>
-                                {% endif %}
-                            </div>
-                        </div>
-
-                        <div class="mt-6">
-                            <label for="{{ form.direccion.id_for_label }}" class="block text-sm font-medium text-agua-dark mb-2">
-                                <i class="fas fa-map-marker-alt mr-2 text-agua-blue"></i>
-                                Dirección
-                            </label>
-                            <div class="relative">
-                                <textarea id="{{ form.direccion.id_for_label }}" 
-                                          name="{{ form.direccion.name }}"
-                                          class="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-agua-blue focus:border-transparent placeholder-gray-400 transition-all duration-200 pl-12"
-                                          placeholder="Ingresa tu dirección completa...">{{ form.direccion.value|default:'' }}</textarea>
-                                <div class="absolute top-3 left-3 text-gray-400">
-                                    <i class="fas fa-map-marker-alt"></i>
-                                </div>
-                            </div>
-                            {% if form.direccion.errors %}
-                                <div class="text-red-500 text-sm mt-2 bg-red-50 border border-red-200 rounded-md p-2">
-                                    {% for error in form.direccion.errors %}
-                                        <p><i class="fas fa-exclamation-circle mr-1"></i>{{ error }}</p>
-                                    {% endfor %}
-                                </div>
                             {% endif %}
-                        </div>
-                    </div>
 
-                    <div class="border-b border-agua-light/30 pb-6">
-                        <h4 class="text-md font-medium text-agua-dark mb-6 flex items-center">
-                            <i class="fas fa-lock mr-3 text-agua-blue"></i>
-                            Seguridad de la Cuenta
-                        </h4>
-                        
-                        <div class="grid md:grid-cols-2 gap-6">
-                            <div class="form-field">
-                                <label for="{{ form.password1.id_for_label }}" class="block text-sm font-medium text-agua-dark mb-2">
-                                    <i class="fas fa-key mr-2 text-agua-blue"></i>
-                                    Contraseña
-                                </label>
-                                <div class="relative">
-                                    <input type="password" 
-                                           id="{{ form.password1.id_for_label }}" 
-                                           name="{{ form.password1.name }}"
-                                           placeholder="Crea una contraseña segura"
-                                           class="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-agua-blue focus:border-transparent placeholder-gray-400 transition-all duration-200 pl-12">
-                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                        <i class="fas fa-lock text-gray-400"></i>
+                            <div class="border-b border-agua-light/30 pb-6">
+                                <h4 class="text-md font-medium text-agua-dark mb-6 flex items-center">
+                                    <i class="fas fa-user-circle mr-3 text-agua-blue"></i>
+                                    Información Personal
+                                </h4>
+                                
+                                <div class="grid md:grid-cols-2 gap-6">
+                                    <div class="form-field">
+                                        <label for="{{ form.username.id_for_label }}" class="block text-sm font-medium text-agua-dark mb-2">
+                                            <i class="fas fa-user mr-2 text-agua-blue"></i>
+                                            Nombre de usuario
+                                        </label>
+                                        <div class="relative">
+                                            <input type="text" 
+                                                   id="{{ form.username.id_for_label }}" 
+                                                   name="{{ form.username.name }}"
+                                                   value="{{ form.username.value|default:'' }}"
+                                                   placeholder="Ej: juan_perez"
+                                                   class="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-agua-blue focus:border-transparent placeholder-gray-400 transition-all duration-200 pl-12">
+                                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                <i class="fas fa-user text-gray-400"></i>
+                                            </div>
+                                        </div>
+                                        {% if form.username.errors %}
+                                            <div class="text-red-500 text-sm mt-2 bg-red-50 border border-red-200 rounded-md p-2">
+                                                {% for error in form.username.errors %}
+                                                    <p><i class="fas fa-exclamation-circle mr-1"></i>{{ error }}</p>
+                                                {% endfor %}
+                                            </div>
+                                        {% else %}
+                                            <p class="text-gray-500 text-xs mt-1">Requerido. 4-150 caracteres. Letras, números y @/./+/-/_ solamente.</p>
+                                        {% endif %}
                                     </div>
-                                    <button type="button" 
-                                            class="password-toggle absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer"
-                                            onclick="togglePassword('{{ form.password1.id_for_label }}', this)">
-                                        <i class="fas fa-eye text-gray-400 hover:text-agua-blue transition-colors"></i>
-                                    </button>
+
+                                    <div class="form-field">
+                                        <label for="{{ form.email.id_for_label }}" class="block text-sm font-medium text-agua-dark mb-2">
+                                            <i class="fas fa-envelope mr-2 text-agua-blue"></i>
+                                            Correo electrónico
+                                        </label>
+                                        <div class="relative">
+                                            <input type="email" 
+                                                   id="{{ form.email.id_for_label }}" 
+                                                   name="{{ form.email.name }}"
+                                                   value="{{ form.email.value|default:'' }}"
+                                                   placeholder="Ej: juan@ejemplo.com"
+                                                   class="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-agua-blue focus:border-transparent placeholder-gray-400 transition-all duration-200 pl-12">
+                                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                <i class="fas fa-envelope text-gray-400"></i>
+                                            </div>
+                                        </div>
+                                        {% if form.email.errors %}
+                                            <div class="text-red-500 text-sm mt-2 bg-red-50 border border-red-200 rounded-md p-2">
+                                                {% for error in form.email.errors %}
+                                                    <p><i class="fas fa-exclamation-circle mr-1"></i>{{ error }}</p>
+                                                {% endfor %}
+                                            </div>
+                                        {% else %}
+                                            <p class="text-gray-500 text-xs mt-1">Requerido. Ingresa un correo válido.</p>
+                                        {% endif %}
+                                    </div>
                                 </div>
-                                {% if form.password1.errors %}
-                                    <div class="text-red-500 text-sm mt-2 bg-red-50 border border-red-200 rounded-md p-2">
-                                        {% for error in form.password1.errors %}
-                                            <p><i class="fas fa-exclamation-circle mr-1"></i>{{ error }}</p>
-                                        {% endfor %}
-                                    </div>
-                                {% endif %}
-                            </div>
 
-                            <div class="form-field">
-                                <label for="{{ form.password2.id_for_label }}" class="block text-sm font-medium text-agua-dark mb-2">
-                                    <i class="fas fa-key mr-2 text-agua-blue"></i>
-                                    Confirmar Contraseña
-                                </label>
-                                <div class="relative">
-                                    <input type="password" 
-                                           id="{{ form.password2.id_for_label }}" 
-                                           name="{{ form.password2.name }}"
-                                           placeholder="Repite tu contraseña"
-                                           class="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-agua-blue focus:border-transparent placeholder-gray-400 transition-all duration-200 pl-12">
-                                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
-                                        <i class="fas fa-lock text-gray-400"></i>
+                                <div class="grid md:grid-cols-2 gap-6 mt-6">
+                                    <div class="form-field">
+                                        <label for="{{ form.first_name.id_for_label }}" class="block text-sm font-medium text-agua-dark mb-2">
+                                            <i class="fas fa-id-card mr-2 text-agua-blue"></i>
+                                            Nombre
+                                        </label>
+                                        <div class="relative">
+                                            <input type="text" 
+                                                   id="{{ form.first_name.id_for_label }}" 
+                                                   name="{{ form.first_name.name }}"
+                                                   value="{{ form.first_name.value|default:'' }}"
+                                                   placeholder="Ej: Juan"
+                                                   class="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-agua-blue focus:border-transparent placeholder-gray-400 transition-all duration-200 pl-12">
+                                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                <i class="fas fa-id-card text-gray-400"></i>
+                                            </div>
+                                        </div>
+                                        {% if form.first_name.errors %}
+                                            <div class="text-red-500 text-sm mt-2 bg-red-50 border border-red-200 rounded-md p-2">
+                                                {% for error in form.first_name.errors %}
+                                                    <p><i class="fas fa-exclamation-circle mr-1"></i>{{ error }}</p>
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
                                     </div>
-                                    <button type="button" 
-                                            class="password-toggle absolute inset-y-0 right-0 pr-3 flex items-center cursor-pointer"
-                                            onclick="togglePassword('{{ form.password2.id_for_label }}', this)">
-                                        <i class="fas fa-eye text-gray-400 hover:text-agua-blue transition-colors"></i>
-                                    </button>
+
+                                    <div class="form-field">
+                                        <label for="{{ form.last_name.id_for_label }}" class="block text-sm font-medium text-agua-dark mb-2">
+                                            <i class="fas fa-id-card mr-2 text-agua-blue"></i>
+                                            Apellido
+                                        </label>
+                                        <div class="relative">
+                                            <input type="text" 
+                                                   id="{{ form.last_name.id_for_label }}" 
+                                                   name="{{ form.last_name.name }}"
+                                                   value="{{ form.last_name.value|default:'' }}"
+                                                   placeholder="Ej: Pérez"
+                                                   class="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-agua-blue focus:border-transparent placeholder-gray-400 transition-all duration-200 pl-12">
+                                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                <i class="fas fa-id-card text-gray-400"></i>
+                                            </div>
+                                        </div>
+                                        {% if form.last_name.errors %}
+                                            <div class="text-red-500 text-sm mt-2 bg-red-50 border border-red-200 rounded-md p-2">
+                                                {% for error in form.last_name.errors %}
+                                                    <p><i class="fas fa-exclamation-circle mr-1"></i>{{ error }}</p>
+                                                {% endfor %}
+                                            </div>
+                                        {% endif %}
+                                    </div>
                                 </div>
-                                {% if form.password2.errors %}
-                                    <div class="text-red-500 text-sm mt-2 bg-red-50 border border-red-200 rounded-md p-2">
-                                        {% for error in form.password2.errors %}
-                                            <p><i class="fas fa-exclamation-circle mr-1"></i>{{ error }}</p>
-                                        {% endfor %}
+                            </div>
+
+                            <div class="border-b border-agua-light/30 pb-6">
+                                <h4 class="text-md font-medium text-agua-dark mb-6 flex items-center">
+                                    <i class="fas fa-shield-alt mr-3 text-agua-blue"></i>
+                                    Información de Seguridad
+                                </h4>
+                                
+                                <div class="grid md:grid-cols-2 gap-6">
+                                    <div class="form-field">
+                                        <label for="{{ form.password1.id_for_label }}" class="block text-sm font-medium text-agua-dark mb-2">
+                                            <i class="fas fa-lock mr-2 text-agua-blue"></i>
+                                            Contraseña
+                                        </label>
+                                        <div class="relative">
+                                            <input type="password" 
+                                                   id="{{ form.password1.id_for_label }}" 
+                                                   name="{{ form.password1.name }}"
+                                                   placeholder="••••••••"
+                                                   class="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-agua-blue focus:border-transparent placeholder-gray-400 transition-all duration-200 pl-12">
+                                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                <i class="fas fa-lock text-gray-400"></i>
+                                            </div>
+                                        </div>
+                                        {% if form.password1.errors %}
+                                            <div class="text-red-500 text-sm mt-2 bg-red-50 border border-red-200 rounded-md p-2">
+                                                {% for error in form.password1.errors %}
+                                                    <p><i class="fas fa-exclamation-circle mr-1"></i>{{ error }}</p>
+                                                {% endfor %}
+                                            </div>
+                                        {% else %}
+                                            <div class="text-gray-500 text-xs mt-1 space-y-1">
+                                                <p>Tu contraseña debe contener al menos:</p>
+                                                <ul class="list-disc list-inside space-y-1">
+                                                    <li>8 caracteres</li>
+                                                    <li>Al menos una letra</li>
+                                                    <li>Al menos un número</li>
+                                                </ul>
+                                            </div>
+                                        {% endif %}
                                     </div>
-                                {% endif %}
-                            </div>
-                        </div>
-                    </div>
 
-                    <div class="bg-agua-light/20 rounded-lg p-4 border border-agua-light/30">
-                        <div class="flex items-start">
-                            <div class="flex items-center h-5">
-                                <input type="checkbox" 
-                                       id="terms" 
-                                       name="terms"
-                                       required
-                                       class="h-4 w-4 text-agua-blue focus:ring-agua-blue border-gray-300 rounded">
+                                    <div class="form-field">
+                                        <label for="{{ form.password2.id_for_label }}" class="block text-sm font-medium text-agua-dark mb-2">
+                                            <i class="fas fa-lock mr-2 text-agua-blue"></i>
+                                            Confirmar contraseña
+                                        </label>
+                                        <div class="relative">
+                                            <input type="password" 
+                                                   id="{{ form.password2.id_for_label }}" 
+                                                   name="{{ form.password2.name }}"
+                                                   placeholder="••••••••"
+                                                   class="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-agua-blue focus:border-transparent placeholder-gray-400 transition-all duration-200 pl-12">
+                                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                <i class="fas fa-lock text-gray-400"></i>
+                                            </div>
+                                        </div>
+                                        {% if form.password2.errors %}
+                                            <div class="text-red-500 text-sm mt-2 bg-red-50 border border-red-200 rounded-md p-2">
+                                                {% for error in form.password2.errors %}
+                                                    <p><i class="fas fa-exclamation-circle mr-1"></i>{{ error }}</p>
+                                                {% endfor %}
+                                            </div>
+                                        {% else %}
+                                            <p class="text-gray-500 text-xs mt-1">Ingresa la misma contraseña para verificar.</p>
+                                        {% endif %}
+                                    </div>
+                                </div>
                             </div>
-                            <div class="ml-3 text-sm">
-                                <label for="terms" class="text-agua-dark">
-                                    <i class="fas fa-file-contract mr-2 text-agua-blue"></i>
-                                    Acepto los 
-                                    <a href="#" class="text-agua-blue hover:text-agua-dark font-medium underline">términos y condiciones</a>
-                                    y la 
-                                    <a href="#" class="text-agua-blue hover:text-agua-dark font-medium underline">política de privacidad</a>
-                                </label>
-                            </div>
-                        </div>
-                    </div>
 
-                    <div>
-                        <button type="submit" 
-                                class="group relative w-full flex justify-center py-4 px-6 border border-transparent text-lg font-medium rounded-lg text-white bg-gradient-to-r from-agua-blue to-agua-dark hover:from-agua-dark hover:to-agua-blue focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-agua-blue transition-all duration-200 transform hover:scale-[1.02] shadow-lg">
-                            <span class="absolute left-0 inset-y-0 flex items-center pl-4">
-                                <i class="fas fa-user-plus text-agua-light group-hover:text-white text-xl"></i>
-                            </span>
-                            <span id="register-btn-text">Crear Mi Cuenta</span>
-                            <div class="hidden" id="register-spinner">
-                                <i class="fas fa-spinner fa-spin mr-2"></i>
-                                Creando cuenta...
-                            </div>
-                        </button>
-                    </div>
+                            <div class="border-b border-agua-light/30 pb-6">
+                                <h4 class="text-md font-medium text-agua-dark mb-6 flex items-center">
+                                    <i class="fas fa-briefcase mr-3 text-agua-blue"></i>
+                                    Tipo de Usuario
+                                </h4>
+                                
+                                <div class="grid md:grid-cols-2 gap-6">
+                                    <div class="form-field">
+                                        <label for="{{ form.tipo_usuario.id_for_label }}" class="block text-sm font-medium text-agua-dark mb-2">
+                                            <i class="fas fa-users mr-2 text-agua-blue"></i>
+                                            Rol en el sistema
+                                        </label>
+                                        <div class="relative">
+                                            <select id="{{ form.tipo_usuario.id_for_label }}" 
+                                                    name="{{ form.tipo_usuario.name }}"
+                                                    class="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-agua-blue focus:border-transparent transition-all duration-200 pl-12">
+                                                <option value="">Selecciona tu rol</option>
+                                                <option value="empresa" {% if form.tipo_usuario.value == 'empresa' %}selected{% endif %}>Empresa (Acceso completo)</option>
+                                                <option value="conductor" {% if form.tipo_usuario.value == 'conductor' %}selected{% endif %}>Conductor (Solo despachos)</option>
+                                            </select>
+                                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                <i class="fas fa-users text-gray-400"></i>
+                                            </div>
+                                        </div>
+                                        {% if form.tipo_usuario.errors %}
+                                            <div class="text-red-500 text-sm mt-2 bg-red-50 border border-red-200 rounded-md p-2">
+                                                {% for error in form.tipo_usuario.errors %}
+                                                    <p><i class="fas fa-exclamation-circle mr-1"></i>{{ error }}</p>
+                                                {% endfor %}
+                                            </div>
+                                        {% else %}
+                                            <p class="text-gray-500 text-xs mt-1">Selecciona el tipo de acceso que necesitas.</p>
+                                        {% endif %}
+                                    </div>
 
-                    <div class="text-center pt-4">
-                        <p class="text-sm text-agua-dark">
-                            ¿Ya tienes cuenta? 
-                            <a href="{% url 'usuarios:login' %}" 
-                               class="font-medium text-agua-blue hover:text-agua-dark transition-colors underline">
-                                Inicia sesión aquí
-                            </a>
-                        </p>
+                                    <div class="form-field">
+                                        <label for="{{ form.telefono.id_for_label }}" class="block text-sm font-medium text-agua-dark mb-2">
+                                            <i class="fas fa-phone mr-2 text-agua-blue"></i>
+                                            Teléfono
+                                        </label>
+                                        <div class="relative">
+                                            <input type="tel" 
+                                                   id="{{ form.telefono.id_for_label }}" 
+                                                   name="{{ form.telefono.name }}"
+                                                   value="{{ form.telefono.value|default:'' }}"
+                                                   placeholder="Ej: 0412-123-4567"
+                                                   class="block w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-agua-blue focus:border-transparent placeholder-gray-400 transition-all duration-200 pl-12">
+                                            <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                                <i class="fas fa-phone text-gray-400"></i>
+                                            </div>
+                                        </div>
+                                        {% if form.telefono.errors %}
+                                            <div class="text-red-500 text-sm mt-2 bg-red-50 border border-red-200 rounded-md p-2">
+                                                {% for error in form.telefono.errors %}
+                                                    <p><i class="fas fa-exclamation-circle mr-1"></i>{{ error }}</p>
+                                                {% endfor %}
+                                            </div>
+                                        {% else %}
+                                            <p class="text-gray-500 text-xs mt-1">Opcional. Formato: 0412-123-4567</p>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="flex items-center justify-between pt-6">
+                                <div class="flex items-center">
+                                    <input type="checkbox" 
+                                           id="aceptar_terminos" 
+                                           name="aceptar_terminos"
+                                           required
+                                           class="h-4 w-4 text-agua-blue focus:ring-agua-blue border-gray-300 rounded">
+                                    <label for="aceptar_terminos" class="ml-2 block text-sm text-agua-dark">
+                                        Acepto los <a href="#" class="text-agua-blue hover:text-agua-dark underline">términos y condiciones</a>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div class="flex flex-col sm:flex-row gap-4 pt-6">
+                                <button type="submit" 
+                                        class="flex-1 bg-gradient-to-r from-agua-blue to-agua-dark hover:from-agua-dark hover:to-agua-blue text-white font-semibold py-3 px-6 rounded-lg transition-all duration-200 transform hover:scale-[1.02] shadow-md flex items-center justify-center">
+                                    <i class="fas fa-user-plus mr-2"></i>
+                                    Crear Cuenta
+                                </button>
+                                
+                                <a href="{% url 'usuarios:login' %}" 
+                                   class="flex-1 bg-gray-100 hover:bg-gray-200 text-gray-700 font-semibold py-3 px-6 rounded-lg transition-all duration-200 transform hover:scale-[1.02] shadow-md flex items-center justify-center">
+                                    <i class="fas fa-arrow-left mr-2"></i>
+                                    Volver al Login
+                                </a>
+                            </div>
+                        </form>
                     </div>
-                </form>
+                </div>
             </div>
         </div>
+    </main>
 
+    <!-- Modal de soporte -->
+    <div id="soporte-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 hidden">
+      <div class="bg-white rounded-lg shadow-lg p-6 w-11/12 max-w-sm">
+        <div class="flex items-center mb-4">
+          <div class="bg-agua-blue text-white rounded-full p-2 mr-3">
+            <i class="fas fa-envelope text-xl"></i>
+          </div>
+          <h3 class="text-lg font-bold text-agua-dark">Soporte Técnico</h3>
+        </div>
+        <p class="text-gray-700 mb-4">¿Necesitas ayuda? Puedes escribirnos a:</p>
+        <div class="flex items-center gap-2 mb-6">
+          <span id="correo-soporte" class="font-semibold text-agua-blue select-all">matiasmartimez15@gmail.com</span>
+          <button onclick="copiarCorreoSoporte()" class="px-2 py-1 rounded bg-agua-blue text-white hover:bg-agua-dark text-xs font-semibold transition">Copiar</button>
+        </div>
+        <div class="flex justify-end gap-2">
+          <a href="https://mail.google.com/mail/?view=cm&fs=1&to=matiasmartimez15@gmail.com" target="_blank" rel="noopener" class="px-4 py-2 rounded bg-agua-blue text-white hover:bg-agua-dark font-semibold transition">Abrir Gmail</a>
+          <button onclick="cerrarSoporteModal()" class="px-4 py-2 rounded bg-gray-200 text-gray-700 hover:bg-gray-300">Cerrar</button>
+        </div>
+      </div>
     </div>
-</div>
 
-<script>
-function showRegisterToast(msg) {
-    const toast = document.getElementById('register-toast');
-    toast.textContent = msg;
-    toast.classList.remove('hidden');
-    setTimeout(() => { toast.classList.add('hidden'); }, 3500);
-}
-function togglePassword(fieldId, button) {
-    const field = document.getElementById(fieldId);
-    const icon = button.querySelector('i');
-    
-    if (field.type === 'password') {
-        field.type = 'text';
-        icon.classList.remove('fa-eye');
-        icon.classList.add('fa-eye-slash');
-    } else {
-        field.type = 'password';
-        icon.classList.remove('fa-eye-slash');
-        icon.classList.add('fa-eye');
-    }
-}
+    <div id="toast-copiado" class="fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg bg-agua-blue text-white font-semibold flex items-center gap-2 hidden">
+        <i class="fas fa-check-circle"></i>
+        <span>¡Correo copiado al portapapeles!</span>
+    </div>
 
-document.addEventListener('DOMContentLoaded', function() {
-    const form = document.getElementById('registerForm');
-    const termsCheckbox = document.getElementById('terms');
-    
-    form.addEventListener('submit', function(e) {
-        if (!termsCheckbox.checked) {
-            e.preventDefault();
-            showRegisterToast('Debes aceptar los términos y condiciones para continuar.');
-            return false;
+    <style>
+        .form-field input:focus,
+        .form-field select:focus {
+            box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.2);
+            border-color: #67e8f9;
         }
         
-        const btnText = document.getElementById('register-btn-text');
-        const spinner = document.getElementById('register-spinner');
-        const submitBtn = form.querySelector('button[type="submit"]');
-        
-        if (btnText && spinner) {
-            btnText.classList.add('hidden');
-            spinner.classList.remove('hidden');
-            submitBtn.disabled = true;
+        @keyframes wave {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+            100% { transform: scale(1); }
         }
-    });
-    
-    const firstError = document.querySelector('.text-red-500');
-    if (firstError) {
-        firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
-    }
-});
+        
+        #registerForm button:hover {
+            animation: wave 1.5s infinite;
+        }
+        
+        input[type="checkbox"]:checked {
+            background-color: #0891b2;
+            background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M12.207 4.793a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L6.5 9.086l4.293-4.293a1 1 0 011.414 0z'/%3e%3c/svg%3e");
+        }
+    </style>
 
-function validateForm() {
-    const telefono = document.getElementById('{{ form.telefono.id_for_label }}').value;
-    const password1 = document.getElementById('{{ form.password1.id_for_label }}').value;
-    const password2 = document.getElementById('{{ form.password2.id_for_label }}').value;
-    
-    if (!telefono.startsWith('+')) {
-        showRegisterToast('El teléfono debe comenzar con + (formato internacional)');
-        return false;
+    <script>
+    function updateHeaderDateTime() {
+        const now = new Date();
+        const fecha = now.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
+        const hora = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+        document.getElementById('header-fecha-hora').textContent = `${fecha} ${hora}`;
     }
-    
-    if (password1 !== password2) {
-        showRegisterToast('Las contraseñas no coinciden');
-        return false;
-    }
-    
-    return true;
-}
+    setInterval(updateHeaderDateTime, 1000);
+    updateHeaderDateTime();
 
-document.getElementById('registerForm').addEventListener('submit', function(e) {
-    const termsCheckbox = document.getElementById('terms');
-    
-    if (!termsCheckbox.checked) {
+    function showSoporteModal(e) {
         e.preventDefault();
-        showRegisterToast('Debes aceptar los términos y condiciones para continuar.');
-        return false;
+        document.getElementById('soporte-modal').classList.remove('hidden');
     }
-    
-    if (!validateForm()) {
-        e.preventDefault();
-        return false;
+    function cerrarSoporteModal() {
+        document.getElementById('soporte-modal').classList.add('hidden');
     }
-});
-</script>
-
-<style>
-    @keyframes wave {
-        0% { transform: scale(1); }
-        50% { transform: scale(1.02); }
-        100% { transform: scale(1); }
+    function copiarCorreoSoporte() {
+        const correo = document.getElementById('correo-soporte').textContent;
+        navigator.clipboard.writeText(correo);
+        mostrarToastCopiado();
     }
-    
-    #registerForm button:hover {
-        animation: wave 1.5s infinite;
+    function mostrarToastCopiado() {
+        const toast = document.getElementById('toast-copiado');
+        toast.classList.remove('hidden');
+        setTimeout(() => {
+            toast.classList.add('hidden');
+        }, 2000);
     }
-    
-    input[type="checkbox"]:checked {
-        background-color: #0891b2;
-        background-image: url("data:image/svg+xml,%3csvg viewBox='0 0 16 16' fill='white' xmlns='http://www.w3.org/2000/svg'%3e%3cpath d='M12.207 4.793a1 1 0 010 1.414l-5 5a1 1 0 01-1.414 0l-2-2a1 1 0 011.414-1.414L6.5 9.086l4.293-4.293a1 1 0 011.414 0z'/%3e%3c/svg%3e");
-    }
-    
-    #registerForm input:focus, 
-    #registerForm select:focus,
-    #registerForm textarea:focus {
-        box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.2);
-        border-color: #67e8f9;
-    }
-</style>
-{% block footer %}{% endblock %}
-{% endblock %}
+    </script>
+</body>
+</html>

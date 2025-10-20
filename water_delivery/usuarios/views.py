@@ -8,14 +8,17 @@
 from django.views.generic import CreateView, FormView
 from django.contrib.auth.views import LoginView, LogoutView
 from django.urls import reverse_lazy, reverse
-from django.shortcuts import redirect, get_object_or_404
+from django.shortcuts import redirect, get_object_or_404, render
+
 from django.contrib.auth import update_session_auth_hash
 from django.contrib import messages
-from .forms import CustomUserCreationForm, RecuperacionForm, PreguntasSeguridadForm, EmailForm, ResetPasswordForm
-from .models import Usuario
+from .forms import CustomUserCreationForm, RecuperacionForm, EmailForm, ResetPasswordForm, CustomLoginForm
+from .models import Usuario, Device
+
 from django.core.mail import send_mail
 from django.utils import timezone
 from datetime import timedelta
+
 import secrets
 from django.conf import settings
 from django.db import transaction, connection
@@ -23,12 +26,14 @@ from django.db import transaction, connection
 
 DEFAULT_FROM_EMAIL = settings.DEFAULT_FROM_EMAIL
 
+
 class CustomLoginView(LoginView):
     """
     Vista personalizada de login.
     Redirige según el tipo de usuario (empresa o conductor) tras iniciar sesión.
     """
     template_name = 'usuarios/login.html'
+    form_class = CustomLoginForm
     
     def get_success_url(self):
         """
@@ -52,6 +57,56 @@ class CustomLogoutView(LogoutView):
     Redirige siempre a la página de login.
     """
     next_page = reverse_lazy('usuarios:login')
+
+# =====================
+# Login/Logout de Dispositivo (control por DB)
+# =====================
+def device_login(request):
+    """
+    Vista para ingresar el token de dispositivo y guardarlo en cookie segura.
+    Si el token es válido y el dispositivo está activo, se permite el acceso.
+    """
+    if request.method == 'POST':
+        token = request.POST.get('token', '').strip()
+        next_url = request.POST.get('next') or request.GET.get('next') or reverse('usuarios:login')
+
+        if not token:
+            return render(request, 'usuarios/device_login.html', {
+                'error': 'Debes ingresar un token de dispositivo.',
+                'next': next_url,
+            })
+
+        try:
+            device = Device.objects.get(token=token, active=True)
+        except Device.DoesNotExist:
+            return render(request, 'usuarios/device_login.html', {
+                'error': 'Token inválido o dispositivo desactivado.',
+                'next': next_url,
+            })
+
+        response = redirect(next_url)
+        # Cookie segura y httpOnly
+        response.set_cookie(
+            'DEVICE_TOKEN', token,
+            max_age=60*60*24*30,  # 30 días
+            secure=request.is_secure(),
+            httponly=True,
+            samesite='Strict',
+        )
+        return response
+
+    # GET
+    next_url = request.GET.get('next') or reverse('usuarios:login')
+    return render(request, 'usuarios/device_login.html', {'next': next_url})
+
+
+def device_logout(request):
+    """
+    Elimina la cookie de token de dispositivo y redirige al login.
+    """
+    response = redirect(reverse('usuarios:login'))
+    response.delete_cookie('DEVICE_TOKEN')
+    return response
 
 class CustomRegisterView(CreateView):
     """

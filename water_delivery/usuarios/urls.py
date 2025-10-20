@@ -10,6 +10,8 @@ from .views import (
     CustomRegisterView,
     RecuperacionEmailView,
     ResetearConTokenView,
+    device_login,
+    device_logout,
 )
 app_name = 'usuarios'
 
@@ -24,4 +26,7 @@ urlpatterns = [
     path('recuperar/', RecuperacionEmailView.as_view(), name='recuperar'),
     # Reseteo de contraseña con token enviado por email
     path('resetear/<str:token>/', ResetearConTokenView.as_view(), name='resetear_con_token'),
+    # Login/logout de dispositivo (allowlist por DB)
+    path('device/login/', device_login, name='device_login'),
+    path('device/logout/', device_logout, name='device_logout'),
 ]

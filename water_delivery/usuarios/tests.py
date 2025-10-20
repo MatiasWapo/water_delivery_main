@@ -1,73 +1,52 @@
 # =============================================
 # TESTS AUTOMATIZADOS PARA LA APP DE USUARIOS
 # =============================================
-# Este archivo contiene pruebas unitarias para la recuperación de contraseña,
-# validación de respuestas de seguridad y correcto hasheo de datos sensibles.
+# Este archivo contiene pruebas unitarias para la recuperación de contraseña
+# y validación de usuarios del sistema.
 
 from django.test import TestCase
 from django.urls import reverse
 from .models import Usuario
 
-class RecuperacionTests(TestCase):
+class UsuarioTests(TestCase):
     """
-    Pruebas para el flujo de recuperación de contraseña y validación de respuestas.
+    Pruebas básicas para el modelo de usuario y funcionalidades principales.
     """
     def setUp(self):
-        # Crea un usuario de prueba con respuestas de seguridad
+        # Crea un usuario de prueba
         self.user = Usuario.objects.create_user(
             username='testuser',
-            password='testpass',
-            respuesta_1='ciudad_real',
-            respuesta_2='comida_real'
+            email='test@example.com',
+            password='testpass123',
+            tipo_usuario='conductor'
         )
 
-    def test_recuperacion_flow(self):
+    def test_crear_usuario(self):
         """
-        Prueba el flujo completo de recuperación: solicitud, preguntas y cambio de contraseña.
+        Prueba que se puede crear un usuario correctamente.
         """
-        # Paso 1: Recuperación
-        response = self.client.post(reverse('usuarios:recuperar'), {'username': 'testuser'})
-        self.assertEqual(response.status_code, 302)  # Redirección
-        
-        # Paso 2: Preguntas
-        session = self.client.session
-        session['usuario_recuperacion'] = self.user.id
-        session.save()
-        
-        response = self.client.post(reverse('usuarios:preguntas_seguridad'), {
-            'respuesta_1': 'ciudad_real',
-            'respuesta_2': 'comida_real',  # Ambas correctas
-            'nueva_password': 'NuevaPass123!',
-            'confirmar_password': 'NuevaPass123!'
-        })
-        self.assertEqual(response.status_code, 302)  # Redirección a login
-        
-    def test_respuestas_incorrectas(self):
-        """
-        Prueba que el sistema detecta respuestas incorrectas y muestra error.
-        """
-        session = self.client.session
-        session['usuario_recuperacion'] = self.user.id
-        session.save()
-        
-        response = self.client.post(reverse('usuarios:preguntas_seguridad'), {
-            'respuesta_1': 'respuesta_incorrecta',
-            'respuesta_2': 'comida_real',  # Una correcta y otra no
-            'nueva_password': 'NuevaPass123!',
-            'confirmar_password': 'NuevaPass123!'
-        })
-        self.assertEqual(response.status_code, 200)  # No redirecciona
-        self.assertContains(response, "Respuesta incorrecta")  # Verifica mensaje de error
+        self.assertEqual(self.user.username, 'testuser')
+        self.assertEqual(self.user.email, 'test@example.com')
+        self.assertEqual(self.user.tipo_usuario, 'conductor')
+        self.assertTrue(self.user.is_active)
 
-    def test_hasheo_respuestas(self):
+    def test_login_view(self):
         """
-        Verifica que las respuestas de seguridad estén hasheadas correctamente.
+        Prueba que la vista de login funciona correctamente.
         """
-        self.assertTrue(
-            self.user.respuesta_1.startswith('pbkdf2_sha256$') or 
-            self.user.respuesta_1.startswith('bcrypt$')
-        )
-        self.assertTrue(
-            self.user.respuesta_2.startswith('pbkdf2_sha256$') or 
-            self.user.respuesta_2.startswith('bcrypt$')
-        )
+        response = self.client.get(reverse('usuarios:login'))
+        self.assertEqual(response.status_code, 200)
+
+    def test_register_view(self):
+        """
+        Prueba que la vista de registro funciona correctamente.
+        """
+        response = self.client.get(reverse('usuarios:register'))
+        self.assertEqual(response.status_code, 200)
+
+    def test_recuperacion_view(self):
+        """
+        Prueba que la vista de recuperación funciona correctamente.
+        """
+        response = self.client.get(reverse('usuarios:recuperar'))
+        self.assertEqual(response.status_code, 200)

@@ -9,7 +9,7 @@
     <div class="max-w-7xl mx-auto px-2 sm:px-4 md:px-6 lg:px-8">
         
         <!-- Header con información del camión -->
-        <div class="bg-white rounded-xl shadow-lg p-4 sm:p-6 mb-6">
+        <div class="bg-white rounded-xl shadow-lg p-4 sm:p-6 mb-6 header-container">
             <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center space-y-4 lg:space-y-0">
                 <div class="flex items-center space-x-2 sm:space-x-4">
                     <div class="bg-agua-blue p-2 sm:p-3 rounded-full">
@@ -29,9 +29,6 @@
                         </div>
                     </div>
                 </div>
-                
-
-                </div>
             </div>
         </div>
 
@@ -47,8 +44,8 @@
                             Ubicación en Tiempo Real
                         </h2>
                         <div class="flex flex-col space-y-3 w-full max-w-xs">
-                            <button onclick="getMyLocation()" 
-                                    class="bg-purple-500 text-white px-4 py-3 rounded-lg hover:bg-purple-600 transition-colors text-sm font-medium w-full flex items-center justify-center">
+                            <button onclick="getMyLocation()"
+                                     class="bg-purple-500 text-white px-4 py-3 rounded-lg hover:bg-purple-600 transition-colors text-sm font-medium w-full flex items-center justify-center">
                                 <i class="fas fa-location-arrow mr-2"></i>
                                 Mi Ubicación
                             </button>
@@ -56,7 +53,7 @@
                     </div>
                     
                     <!-- Contenedor del Mapa -->
-                    <div id="map" class="w-full h-96 sm:h-[500px] lg:h-[600px] rounded-lg border-2 border-gray-200">
+                    <div id="map" class="w-full h-96 sm:h-[500px] lg:h-[600px] rounded-lg border-2 border-gray-200 map-container">
                         <!-- El mapa se cargará aquí -->
                         <div class="w-full h-full flex items-center justify-center bg-gray-100 rounded-lg">
                             <div class="text-center">
@@ -70,7 +67,7 @@
             
             <!-- Panel de Información -->
             <div class="lg:col-span-1">
-                <div class="bg-white rounded-xl shadow-lg p-4 sm:p-6 sticky top-6">
+                <div class="bg-white rounded-xl shadow-lg p-4 sm:p-6 sticky top-6 info-panel">
                     <h3 class="text-lg font-bold text-gray-900 mb-4 flex items-center">
                         <i class="fas fa-info-circle mr-2 text-agua-blue"></i>
                         Información del Camión
@@ -102,15 +99,11 @@
                             </div>
                         </div>
                     </div>
-                    
-
                 </div>
             </div>
         </div>
     </div>
 </div>
-
-
 
 <script>
 // Variables globales
@@ -246,12 +239,10 @@ function calculateDistance(lat1, lon1, lat2, lon2) {
     const φ2 = lat2 * Math.PI/180;
     const Δφ = (lat2-lat1) * Math.PI/180;
     const Δλ = (lon2-lon1) * Math.PI/180;
-
     const a = Math.sin(Δφ/2) * Math.sin(Δφ/2) +
             Math.cos(φ1) * Math.cos(φ2) *
             Math.sin(Δλ/2) * Math.sin(Δλ/2);
     const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1-a));
-
     return R * c; // Distancia en metros
 }
 
@@ -592,7 +583,7 @@ function getMyLocation() {
                 
                 // Mostrar información de precisión en el header
                 const precisionElement = document.createElement('div');
-                precisionElement.className = 'bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4 animate-fade-in';
+                precisionElement.className = 'bg-green-100 border border-green-400 text-green-700 px-4 py-3 rounded mb-4 animate-fade-in precision-message';
                 precisionElement.innerHTML = `
                     <div class="flex items-center justify-between">
                         <div class="flex items-center">
@@ -606,8 +597,8 @@ function getMyLocation() {
                 `;
                 
                 // Insertar el mensaje de precisión después del header
-                const header = document.querySelector('.bg-white.rounded-xl.shadow-lg.p-4');
-                if (header && !document.querySelector('.bg-green-100.border.border-green-400')) {
+                const header = document.querySelector('.header-container');
+                if (header && !document.querySelector('.precision-message')) {
                     header.parentNode.insertBefore(precisionElement, header.nextSibling);
                     
                     // Auto-ocultar después de 5 segundos
@@ -699,8 +690,6 @@ function saveLocationToServer(lat, lng, accuracy) {
     });
 }
 
-
-
 // Mostrar mensaje
 function showMessage(message, type) {
     const toast = document.createElement('div');
@@ -724,7 +713,7 @@ function showMessage(message, type) {
             icon = 'fa-info-circle';
     }
     
-    toast.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg transition-all duration-300 ${bgColor}`;
+    toast.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg transition-all duration-300 ${bgColor} toast-message`;
     toast.innerHTML = `
         <div class="flex items-center space-x-2">
             <i class="fas ${icon}"></i>
@@ -821,30 +810,92 @@ async function loadUserInfo() {
 </script>
 
 <style>
-/* Estilos personalizados para el mapa */
+/* ESTILOS CORREGIDOS PARA Z-INDEX */
+
+/* Contenedores principales con z-index bajo */
+.header-container {
+    position: relative;
+    z-index: 10;
+}
+
+.map-container {
+    position: relative;
+    z-index: 1;
+}
+
+.info-panel {
+    position: relative;
+    z-index: 10;
+}
+
+/* Mapa y Leaflet con z-index muy bajo */
 #map {
     position: relative;
     overflow: hidden;
     border-radius: 8px;
-}
-
-/* Estilos para el círculo del camión */
-.leaflet-circle {
-    z-index: 1000 !important;
-}
-
-/* Asegurar que el mapa pase por debajo del navbar */
-#map {
     z-index: 1 !important;
 }
 
 .leaflet-container {
     z-index: 1 !important;
+    border-radius: 8px;
 }
 
-/* El navbar debe estar por encima */
-.navbar, .header, .bg-gradient-to-r {
+.leaflet-control-container {
+    z-index: 2 !important;
+}
+
+/* Círculo del camión */
+.leaflet-circle {
+    z-index: 3 !important;
+}
+
+/* Mensajes de toast con z-index alto pero menor que el menú móvil */
+.toast-message {
+    z-index: 8000 !important;
+}
+
+/* Mensajes de precisión */
+.precision-message {
+    z-index: 100 !important;
+}
+
+/* NAVEGACIÓN - Z-INDEX CORREGIDO */
+/* Header/navbar principal debe estar por debajo del menú móvil */
+nav, .navbar, header, .bg-gradient-to-r {
     z-index: 1000 !important;
+    position: relative;
+}
+
+/* MENÚ MÓVIL - Z-INDEX MÁS ALTO */
+.mobile-menu, 
+.mobile-menu-overlay,
+[data-mobile-menu],
+.sidebar-mobile,
+.offcanvas,
+.drawer {
+    z-index: 9999 !important;
+    position: fixed !important;
+}
+
+/* Botón del menú móvil */
+.mobile-menu-button,
+.hamburger-menu,
+[data-mobile-menu-button] {
+    z-index: 10000 !important;
+    position: relative;
+}
+
+/* Overlay del menú móvil */
+.mobile-menu-backdrop,
+.menu-overlay {
+    z-index: 9998 !important;
+    position: fixed !important;
+}
+
+/* Asegurar que el contenido principal esté por debajo */
+main, .main-content, .container {
+    z-index: 1 !important;
     position: relative;
 }
 
@@ -859,10 +910,6 @@ async function loadUserInfo() {
 }
 
 /* Estilos para Leaflet */
-.leaflet-container {
-    border-radius: 8px;
-}
-
 .leaflet-popup-content-wrapper {
     border-radius: 8px;
 }
@@ -882,6 +929,36 @@ async function loadUserInfo() {
     #map {
         height: 300px;
     }
+    
+    /* En móvil, asegurar que el menú tenga la máxima prioridad */
+    .mobile-menu {
+        z-index: 99999 !important;
+    }
+    
+    /* Header en móvil debe estar más bajo */
+    .header-container {
+        z-index: 5 !important;
+    }
+}
+
+/* Estilos adicionales para evitar conflictos */
+.leaflet-top,
+.leaflet-bottom {
+    z-index: 2 !important;
+}
+
+.leaflet-control {
+    z-index: 2 !important;
+}
+
+/* Asegurar que los elementos del mapa no interfieran */
+.leaflet-marker-icon,
+.leaflet-marker-shadow {
+    z-index: 3 !important;
+}
+
+.leaflet-popup {
+    z-index: 4 !important;
 }
 </style>
 
@@ -913,4 +990,4 @@ document.addEventListener('DOMContentLoaded', function() {
     }
 });
 </script>
-{% endblock %} 
+{% endblock %}

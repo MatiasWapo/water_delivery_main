@@ -144,6 +144,7 @@ def _ensure_sslmode(url: str) -> str:
         pass
     return url
 
+<<<<<<< HEAD
 # Configuración de la base de datos para VPS Ubuntu
 DATABASES = {
     'default': {
@@ -153,6 +154,20 @@ DATABASES = {
         'PASSWORD': 'matias123',
         'HOST': '127.0.0.1',
         'PORT': '5432',
+=======
+# Configuración de la base de datos de Railway
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': 'railway',
+        'USER': 'postgres',
+        'PASSWORD': 'NQPNVlQeOjPkjHefypMkzBOeuwGvrQnq',
+        'HOST': 'maglev.proxy.rlwy.net',
+        'PORT': '17367',
+        'OPTIONS': {
+            'sslmode': 'require'
+        }
+>>>>>>> 33da6b0a7070551694c89b56aeb9e921432f68ce
     }
 }
 
@@ -192,11 +207,17 @@ USE_TZ = True
 # =====================
 # Static files
 STATIC_URL = '/static/'
+<<<<<<< HEAD
 STATIC_ROOT = '/opt/water_delivery_main/static/'
 
 # Media files
 MEDIA_URL = '/media/'
 MEDIA_ROOT = '/opt/water_delivery_main/media/'
+=======
+STATICFILES_DIRS = [os.path.join(BASE_DIR, 'static')]
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+>>>>>>> 33da6b0a7070551694c89b56aeb9e921432f68ce
 
 # =====================
 # CORS

@@ -310,6 +310,7 @@ class ClienteListView(ListView):
     model = Cliente
     template_name = "clientes/lista_clientes.html"
     context_object_name = "clientes"
+    
     def dispatch(self, request, *args, **kwargs):
         if not request.user.is_authenticated or getattr(request.user, 'tipo_usuario', None) != 'empresa':
             return acceso_denegado_conductor(request)
