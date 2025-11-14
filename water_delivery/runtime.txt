@@ -1,0 +1,6 @@
+# =============================================
+# VERSIÓN DE PYTHON PARA PRODUCCIÓN
+# =============================================
+# Especifica la versión de Python que debe usar el servidor
+
+python-3.11.7 

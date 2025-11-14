@@ -1,0 +1,1151 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Lista de Clientes{% endblock %}
+
+{% block content %}
+<div class="container-fluid py-4 px-2 sm:px-4">
+    
+    <div class="row mb-3">
+        <div class="col-12 flex justify-end">
+            <div class="counter-badge flex items-center justify-center bg-gradient-agua text-white px-5 py-2 rounded-xl shadow-lg font-semibold text-base sm:text-lg border border-agua-light/50" style="min-width: 120px;">
+                <i class="fas fa-users me-2 text-xl"></i>
+                <span class="fw-bold">{{ clientes.count }}</span> <span class="ml-1">cliente{{ clientes.count|pluralize }}</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="search-container">
+                <div class="search-header mb-3">
+                    <a href="{% url 'clientes:lista_clientes' %}"
+                         class="nav-link {% if request.resolver_match.url_name == 'lista_clientes' %}active{% endif %}"
+                        onclick="focusSearch()">
+                        <i class="fas fa-search mr-2"></i>
+                            Buscar Cliente
+                    </a>
+                </div>
+                <form method="get" class="search-form-optimized" id="busqueda-clientes-form">
+                    <input type="hidden" name="buscar" id="buscar-hidden" value="{{ request.GET.buscar }}">
+                    <input type="hidden" name="cliente_id" id="cliente-id-hidden" value="{{ request.GET.cliente_id }}">
+                    <div class="search-input-group flex flex-col md:flex-row gap-2 md:gap-4 items-stretch">
+                        <div class="cliente-select-wrapper flex-1">
+                            <select id="cliente-busqueda-select"
+                                    class="cliente-select w-full"
+                                    data-placeholder="Seleccionar cliente...">
+                                <option value=""></option>
+                                {% for cliente in clientes_select %}
+                                {% with nombre_completo=cliente.nombre|add:' '|add:cliente.apellido %}
+                                <option value="{{ cliente.pk }}"
+                                        data-search="{{ nombre_completo }}"
+                                        data-display-name="{{ nombre_completo|escape }}"
+                                        data-direccion="{{ cliente.direccion|escape }}"
+                                        data-telefono="{{ cliente.telefono|default_if_none:''|escape }}"
+                                        {% if request.GET.cliente_id and request.GET.cliente_id|stringformat:'s' == cliente.pk|stringformat:'s' %}
+                                            selected
+                                        {% elif request.GET.buscar and request.GET.buscar|lower == nombre_completo|lower %}
+                                            selected
+                                        {% endif %}>
+                                    {{ nombre_completo }} - {{ cliente.direccion }}
+                                </option>
+                                {% endwith %}
+                                {% endfor %}
+                            </select>
+                            <p class="cliente-select-hint text-xs text-gray-500 mt-1">
+                                <i class="fas fa-info-circle mr-1"></i>
+                                Escribe para encontrar rápidamente un cliente y aplicar la búsqueda.
+                            </p>
+                        </div>
+                        <div class="filter-wrapper flex-1">
+                            <select name="filtro" 
+                                    class="filter-select w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-agua-blue focus:border-transparent transition-all duration-200"
+                                    onchange="this.form.submit()">
+                                <option value="" {% if not request.GET.filtro %}selected{% endif %}>
+                                    <i class="fas fa-users me-2"></i>Todos los clientes
+                                </option>
+                                <option value="activos" {% if request.GET.filtro == 'activos' %}selected{% endif %}>
+                                    <i class="fas fa-user-check me-2"></i>Clientes activos
+                                </option>
+                                <option value="inactivos" {% if request.GET.filtro == 'inactivos' %}selected{% endif %}>
+                                    <i class="fas fa-user-slash me-2"></i>Clientes inactivos
+                                </option>
+                                <option value="con_deuda" {% if request.GET.filtro == 'con_deuda' %}selected{% endif %}>
+                                    <i class="fas fa-exclamation-triangle me-2"></i>Con deudas
+                                </option>
+                                <option value="saldo_favor" {% if request.GET.filtro == 'saldo_favor' %}selected{% endif %}>
+                                    <i class="fas fa-gift me-2"></i>Saldo a favor
+                                </option>
+                            </select>
+                        </div>
+                        {% if request.GET.buscar or request.GET.filtro %}
+                        <a href="{% url 'clientes:lista_clientes' %}" class="clear-btn w-full md:w-auto">
+                            <i class="fas fa-times"></i>
+                        </a>
+                        {% endif %}
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    {% if request.GET.buscar or request.GET.filtro %}
+    <div class="row mb-4">
+        <div class="col-12">
+            <div class="alert alert-agua-info border-0 shadow-sm">
+                <div class="d-flex align-items-center">
+                    <div class="alert-icon me-3">
+                        <i class="fas fa-info-circle"></i>
+                    </div>
+                    <div class="flex-grow-1">
+                        {% if clientes %}
+                            <strong>{{ clientes.count }}</strong> resultado{{ clientes.count|pluralize }} encontrado{{ clientes.count|pluralize }}
+                            {% if request.GET.buscar %}para "<strong>{{ request.GET.buscar }}</strong>"{% endif %}
+                            {% if request.GET.filtro %}
+                                {% if request.GET.buscar %} y {% endif %}
+                                filtrado por: 
+                                {% if request.GET.filtro == 'activos' %}
+                                    <strong>Clientes activos</strong>
+                                {% elif request.GET.filtro == 'inactivos' %}
+                                    <strong>Clientes inactivos</strong>
+                                {% elif request.GET.filtro == 'con_deuda' %}
+                                    <strong>Con deudas</strong>
+                                {% elif request.GET.filtro == 'saldo_favor' %}
+                                    <strong>Saldo a favor</strong>
+                                {% endif %}
+                            {% endif %}
+                        {% else %}
+                            No se encontraron resultados
+                            {% if request.GET.buscar %}para "<strong>{{ request.GET.buscar }}</strong>"{% endif %}
+                            {% if request.GET.filtro %}
+                                {% if request.GET.buscar %} y {% endif %}
+                                con el filtro aplicado
+                            {% endif %}
+                        {% endif %}
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endif %}
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card shadow-sm border-0 clients-card">
+                {% if clientes %}
+                <div class="card-header bg-white border-bottom-0 p-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
+                    <div>
+                        <h5 class="mb-0 text-agua-dark fw-semibold text-lg sm:text-xl flex items-center">
+                            <i class="fas fa-list-ul me-2"></i>
+                            Lista de Clientes
+                        </h5>
+                        <small class="text-muted">Gestiona toda tu base de clientes</small>
+                        {% if request.GET.cliente_id and clientes %}
+                        {% with cliente_filtrado=clientes|first %}
+                        <div class="mt-2 inline-flex items-center gap-2 px-3 py-1 rounded-full bg-agua-light text-agua-dark text-sm font-semibold shadow-sm">
+                            <i class="fas fa-filter"></i>
+                            Filtrado por: {{ cliente_filtrado.nombre }} {{ cliente_filtrado.apellido }}
+                            <a href="{% url 'clientes:lista_clientes' %}" class="ml-2 text-agua-dark hover:text-agua-blue" title="Quitar filtro">
+                                <i class="fas fa-times-circle"></i>
+                            </a>
+                        </div>
+                        {% endwith %}
+                        {% endif %}
+                    </div>
+                    <div class="badge bg-agua-light text-agua-dark px-3 py-2 fs-6">
+                        {{ clientes.count }} cliente{{ clientes.count|pluralize }}
+                    </div>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table table-hover align-middle mb-0 modern-table w-full">
+                            <thead class="table-header">
+                                <tr>
+                                    <th class="px-4 py-3 text-center font-bold text-agua-dark text-base font-sans tracking-wide">CLIENTE</th>
+                                    <th class="px-4 py-3 text-center font-bold text-agua-dark text-base font-sans tracking-wide">CONTACTO</th>
+                                    <th class="px-4 py-3 text-center font-bold text-agua-dark text-base font-sans tracking-wide">DIRECCIÓN</th>
+                                    <th class="px-4 py-3 text-center font-bold text-agua-dark text-base font-sans tracking-wide">PRECIO BOTELLÓN</th>
+                                    <th class="px-4 py-3 text-center font-bold text-agua-dark text-base font-sans tracking-wide">ESTADO</th>
+                                    <th class="px-4 py-3 text-center font-bold text-agua-dark text-base font-sans tracking-wide">ACCIONES</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for info in clientes_info %}
+                                    {% with cliente=info.obj %}
+                                <tr class="client-row {% if cliente.debe_total > 0 %}debt-row{% endif %} {% if not cliente.activo %}inactive-row{% endif %} rounded-lg mb-2 shadow-sm border border-gray-200">
+                                    <td class="ps-2 sm:ps-4 py-3 align-top">
+                                        <div class="d-flex align-items-center">
+                                            <div class="client-avatar me-3 {% if not cliente.activo %}inactive-avatar{% endif %}">
+                                                <span>{{ cliente.nombre|first }}{{ cliente.apellido|first }}</span>
+                                            </div>
+                                            <div>
+                                                <h6 class="mb-0 fw-semibold {% if not cliente.activo %}text-muted{% else %}text-dark{% endif %} text-base sm:text-lg">
+                                                    {{ cliente.nombre }} {{ cliente.apellido }}
+                                                    {% if not cliente.activo %}
+                                                        <span class="badge bg-secondary ms-2">INACTIVO</span>
+                                                    {% endif %}
+                                                </h6>
+                                                <small class="text-muted">ID: #{{ cliente.id|stringformat:"04d" }}</small>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="py-3 align-top">
+                                        {% if cliente.telefono %}
+                                            <a href="tel:{{ cliente.telefono }}" class="contact-link text-sm sm:text-base">
+                                                <i class="fas fa-phone-alt me-2"></i>
+                                                {{ cliente.telefono }}
+                                            </a>
+                                        {% else %}
+                                            <span class="text-muted text-sm sm:text-base">
+                                                <i class="fas fa-phone-slash me-2"></i>
+                                                Sin teléfono
+                                            </span>
+                                        {% endif %}
+                                    </td>
+                                    <td class="py-3 text-center align-middle">
+                                        <span class="text-base font-sans">{{ cliente.direccion }}</span>
+                                    </td>
+                                    <td class="py-3 text-center align-middle">
+                                        <span class="precio-botellon font-semibold text-base font-sans tracking-wide text-green-600">
+                                            <i class="fas fa-dollar-sign me-1"></i>
+                                            ${{ cliente.precio_botellon|floatformat:2 }}
+                                        </span>
+                                    </td>
+                                    <td class="py-3 flex flex-col items-center justify-center text-center align-middle">
+                                        <span class="deuda-botellones flex items-center gap-1 font-bold text-base font-sans tracking-wide {% if info.botellones_color == 'red' %}text-red-600{% elif info.botellones_color == 'green' %}text-green-600{% else %}text-gray-600{% endif %}">
+                                            {% if info.botellones_color == 'red' %}
+                                                <i class="fas fa-exclamation-triangle"></i> Debe {{ info.botellones }} botellones
+                                            {% elif info.botellones_color == 'green' %}
+                                                <i class="fas fa-bottle-water"></i> Saldo a favor {{ info.botellones }} botellones
+                                            {% else %}
+                                                <i class="fas fa-check-circle"></i> 0 botellones
+                                            {% endif %}
+                                        </span>
+                                        <br>
+                                        <span class="deuda-saldo font-semibold text-base font-sans tracking-wide">
+                                            {% if cliente.saldo > 0 %}
+                                                <span class="text-red-600">Debe ${{ cliente.saldo|floatformat:2 }}</span>
+                                            {% elif cliente.saldo < 0 %}
+                                                <span class="text-green-600">Saldo a favor ${{ cliente.saldo|floatformat:2|slice:"1:" }}</span>
+                                            {% else %}
+                                                <span class="text-gray-600">Al día</span>
+                                            {% endif %}
+                                        </span>
+                                    </td>
+                                    <td class="text-center py-3 align-top">
+                                        <div class="action-buttons flex flex-row gap-2 justify-center items-center">
+                                            <a href="{% url 'clientes:detalle_cliente' cliente.pk %}"
+                                                class="action-btn view-btn"
+                                               data-bs-toggle="tooltip"
+                                                title="Ver historial">
+                                                <i class="fas fa-eye"></i>
+                                            </a>
+                                            <a href="{% url 'clientes:editar_cliente' cliente.pk %}"
+                                                class="action-btn edit-btn"
+                                               data-bs-toggle="tooltip"
+                                                title="Editar cliente">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <a href="{% url 'clientes:toggle_cliente_status' cliente.pk %}"
+                                               class="action-btn {% if cliente.activo %}disable-btn{% else %}enable-btn{% endif %}"
+                                               data-bs-toggle="tooltip"
+                                               title="{% if cliente.activo %}Deshabilitar{% else %}Habilitar{% endif %}"
+                                               onclick="event.preventDefault(); showConfirmModal(this, '{% if cliente.activo %}Deshabilitar{% else %}Habilitar{% endif %}', event)">
+                                                <i class="fas fa-{% if cliente.activo %}user-slash{% else %}user-check{% endif %}"></i>
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endwith %}
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+                {% else %}
+                <div class="card-body">
+                    <div class="empty-state text-center py-5">
+                        <div class="empty-icon mb-4">
+                            <i class="fas fa-users"></i>
+                        </div>
+                        <h4 class="text-agua-dark mb-3 text-base sm:text-lg">
+                            {% if request.GET.buscar or request.GET.filtro %}
+                                No se encontraron clientes
+                            {% else %}
+                                No hay clientes registrados
+                            {% endif %}
+                        </h4>
+                        <p class="text-muted mb-4 lead text-sm sm:text-base">
+                            {% if request.GET.buscar or request.GET.filtro %}
+                                Intenta con otros términos de búsqueda o <a href="{% url 'clientes:lista_clientes' %}" class="text-agua-blue">ver todos los clientes</a>
+                            {% else %}
+                                <a href="{% url 'clientes:nuevo_cliente' %}" class="btn btn-agua-primary">
+                                    <i class="fas fa-plus me-2"></i>Agregar Cliente
+                                </a>
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="confirm-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 hidden">
+  <div class="bg-white rounded-lg shadow-lg p-6 w-11/12 max-w-sm">
+    <div class="flex items-center mb-4">
+      <div class="bg-agua-blue text-white rounded-full p-2 mr-3">
+        <i class="fas fa-exclamation-triangle text-xl"></i>
+      </div>
+      <h3 class="text-lg font-bold text-agua-dark" id="confirm-modal-title">Confirmar acción</h3>
+    </div>
+    <p class="text-gray-700 mb-6" id="modal-text">¿Estás seguro de que deseas continuar?</p>
+    <div class="flex justify-end gap-2">
+      <button onclick="closeConfirmModal()" class="px-4 py-2 rounded bg-gray-200 text-gray-700 hover:bg-gray-300">Cancelar</button>
+      <a id="confirm-action" href="#" class="px-4 py-2 rounded bg-agua-blue text-white hover:bg-agua-dark font-semibold transition">Sí, continuar</a>
+    </div>
+  </div>
+</div>
+
+<!-- Select2 CSS y JS -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<style>
+:root {
+    --agua-blue: #0891b2;
+    --agua-dark: #164e63;
+    --agua-light: #a5f3fc;
+    --agua-light-bg: #ecfeff;
+    --agua-gradient: linear-gradient(135deg, #0891b2, #0e7490, #164e63);
+}
+
+.bg-gradient-agua {
+    background: var(--agua-gradient);
+}
+
+.text-white-75 {
+    color: rgba(255, 255, 255, 0.75) !important;
+}
+
+.icon-circle {
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+}
+
+.search-icon {
+    width: 50px;
+    height: 50px;
+    background: var(--agua-light-bg);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 20px;
+}
+
+.search-card {
+    border-radius: 15px;
+    transition: all 0.3s ease;
+}
+
+.search-card:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 25px rgba(8, 145, 178, 0.15) !important;
+}
+
+.clients-card {
+    border-radius: 15px;
+    overflow: hidden;
+}
+
+.search-form .input-group-text {
+    border-radius: 10px 0 0 10px;
+}
+
+.search-form .form-control {
+    border-radius: 0;
+}
+
+.search-form .btn {
+    border-radius: 0 10px 10px 0;
+}
+
+.modern-table {
+    font-size: 14px;
+}
+
+.table-header {
+    background: linear-gradient(90deg, var(--agua-light-bg), #f8fafc);
+    color: var(--agua-dark);
+    font-weight: 600;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.client-row {
+    transition: all 0.2s ease;
+    border-left: 4px solid transparent;
+}
+
+.client-row:hover {
+    background-color: rgba(8, 145, 178, 0.03);
+    border-left-color: var(--agua-blue);
+    transform: translateX(2px);
+}
+
+.debt-row {
+    background-color: rgba(255, 193, 7, 0.05);
+}
+
+.inactive-row {
+    background-color: rgba(107, 114, 128, 0.05);
+    opacity: 0.7;
+}
+
+.inactive-row:hover {
+    background-color: rgba(107, 114, 128, 0.1);
+    border-left-color: #6b7280;
+}
+
+.client-avatar {
+    width: 45px;
+    height: 45px;
+    border-radius: 50%;
+    background: var(--agua-gradient);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 16px;
+    text-transform: uppercase;
+    box-shadow: 0 2px 8px rgba(8, 145, 178, 0.3);
+}
+
+.inactive-avatar {
+    background: linear-gradient(135deg, #9ca3af, #6b7280);
+    box-shadow: 0 2px 8px rgba(107, 163, 175, 0.3);
+}
+
+.contact-link {
+    color: var(--agua-dark);
+    text-decoration: none;
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.contact-link:hover {
+    color: var(--agua-blue);
+    text-decoration: underline;
+}
+
+.address-text {
+    color: #6b7280;
+    font-size: 13px;
+    line-height: 1.4;
+}
+
+.status-badge {
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.success-badge {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+    box-shadow: 0 2px 8px rgba(16, 185, 129, 0.3);
+}
+
+.debt-badge {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: white;
+    box-shadow: 0 2px 8px rgba(245, 158, 11, 0.3);
+}
+
+.inactive-badge {
+    background: linear-gradient(135deg, #6b7280, #4b5563);
+    color: white;
+    box-shadow: 0 2px 8px rgba(107, 114, 128, 0.3);
+}
+
+    .action-buttons {
+        display: flex;
+        gap: 6px;
+        justify-content: center;
+    }
+    
+    .action-btn {
+        width: 32px;
+        height: 32px;
+        border-radius: 6px;
+        border: none;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 12px;
+        transition: all 0.2s ease;
+        text-decoration: none;
+    }
+
+.view-btn {
+    background: linear-gradient(135deg, #3b82f6, #2563eb);
+    color: white;
+}
+
+.view-btn:hover {
+    background: linear-gradient(135deg, #2563eb, #1d4ed8);
+    color: white;
+    transform: translateY(-1px);
+}
+
+.edit-btn {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: white;
+}
+
+.edit-btn:hover {
+    background: linear-gradient(135deg, #d97706, #b45309);
+    color: white;
+    transform: translateY(-1px);
+}
+
+.disable-btn {
+    background: linear-gradient(135deg, #ef4444, #dc2626);
+    color: white;
+}
+
+.disable-btn:hover {
+    background: linear-gradient(135deg, #dc2626, #b91c1c);
+    color: white;
+    transform: translateY(-1px);
+}
+
+.enable-btn {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+}
+
+.enable-btn:hover {
+    background: linear-gradient(135deg, #059669, #047857);
+    color: white;
+    transform: translateY(-1px);
+}
+
+.empty-state .empty-icon {
+    width: 120px;
+    height: 120px;
+    margin: 0 auto;
+    background: var(--agua-light-bg);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 48px;
+    color: var(--agua-blue);
+}
+
+.alert-agua-info {
+    background: var(--agua-light-bg);
+    border-left: 4px solid var(--agua-blue);
+    color: var(--agua-dark);
+}
+
+.alert-icon {
+    width: 40px;
+    height: 40px;
+    background: var(--agua-blue);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-size: 16px;
+}
+
+.btn-agua-blue {
+    background: var(--agua-gradient);
+    border: none;
+    color: white;
+    font-weight: 600;
+    padding: 12px 24px;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+}
+
+.btn-agua-blue:hover {
+    background: linear-gradient(135deg, #0e7490, #164e63);
+    color: white;
+    transform: translateY(-1px);
+    box-shadow: 0 4px 15px rgba(8, 145, 178, 0.4);
+}
+
+.bg-agua-light {
+    background-color: var(--agua-light-bg);
+}
+
+.text-agua-blue { color: var(--agua-blue); }
+.text-agua-dark { color: var(--agua-dark); }
+
+.stats-compact {
+    padding: 1rem 0;
+}
+
+.counter-badge {
+    background: var(--agua-gradient);
+    color: white;
+    padding: 12px 24px;
+    border-radius: 25px;
+    font-size: 16px;
+    box-shadow: 0 4px 15px rgba(8, 145, 178, 0.3);
+}
+
+/* Animación pulse para el contador de clientes */
+.counter-badge {
+    animation: none;
+    cursor: pointer;
+}
+.counter-badge:hover {
+    animation: pulse 0.7s;
+    box-shadow: 0 8px 32px rgba(8,145,178,0.18);
+}
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.07); }
+    100% { transform: scale(1); }
+}
+
+/* Avatar con sombra y escala en hover */
+.client-avatar {
+    transition: box-shadow 0.2s, transform 0.2s;
+}
+.client-avatar:hover {
+    box-shadow: 0 4px 16px rgba(8,145,178,0.25);
+    transform: scale(1.08);
+}
+
+/* Badges de estado con gradiente y borde */
+.badge.bg-secondary {
+    background: linear-gradient(135deg, #9ca3af, #6b7280);
+    color: white;
+    border: 1.5px solid #e5e7eb;
+    box-shadow: 0 2px 8px rgba(107, 114, 128, 0.15);
+}
+
+/* Zebra striping para filas de tabla */
+.modern-table tbody tr:nth-child(even) {
+    background: #f1f5f9;
+}
+.modern-table tbody tr:nth-child(odd) {
+    background: #f8fafc;
+}
+
+/* Tooltips personalizados */
+.tooltip-inner {
+    background: var(--agua-blue) !important;
+    color: white !important;
+    font-size: 13px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(8,145,178,0.12);
+}
+.tooltip-arrow::before {
+    border-top-color: var(--agua-blue) !important;
+}
+
+.search-container {
+    background: white;
+    border-radius: 15px;
+    padding: 2rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    border: 1px solid rgba(8, 145, 178, 0.1);
+}
+
+.search-title {
+    color: var(--agua-dark);
+    font-weight: 700;
+    margin: 0;
+    font-size: 1.5rem;
+}
+
+.search-form-optimized {
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.search-input-group {
+    display: flex;
+    gap: 12px;
+    align-items: stretch;
+}
+
+.search-input-wrapper {
+    position: relative;
+    flex: 2;
+    min-width: 0;
+}
+
+.search-input-icon {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--agua-blue);
+    font-size: 16px;
+    z-index: 2;
+}
+
+.filter-wrapper {
+    flex: 0.8;
+    min-width: 160px;
+    max-width: 220px;
+}
+
+.cliente-select-wrapper {
+    flex: 1.2;
+    min-width: 220px;
+}
+
+.cliente-select {
+    width: 100%;
+}
+
+.select2-option {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.select2-option-title {
+    display: flex;
+    align-items: center;
+    font-weight: 600;
+    color: #1f2937;
+}
+
+.select2-option-subtext {
+    font-size: 13px;
+    color: #4b5563;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.select2-option-subtext i {
+    font-size: 12px;
+    color: #0891b2;
+}
+
+.filter-select {
+    width: 100%;
+    padding: 12px 14px;
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    font-size: 15px;
+    transition: all 0.3s ease;
+    background: #fafafa;
+    cursor: pointer;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.filter-select:focus {
+    outline: none;
+    border-color: var(--agua-blue);
+    background: white;
+    box-shadow: 0 0 0 3px rgba(8, 145, 178, 0.1);
+}
+
+.filter-select option {
+    padding: 8px 12px;
+    font-size: 14px;
+}
+
+.search-input {
+    width: 100%;
+    padding: 16px 16px 16px 48px;
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    font-size: 16px;
+    transition: all 0.3s ease;
+    background: #fafafa;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: var(--agua-blue);
+    background: white;
+    box-shadow: 0 0 0 3px rgba(8, 145, 178, 0.1);
+}
+
+.search-input::placeholder {
+    color: #9ca3af;
+    font-weight: 400;
+}
+
+.search-btn {
+    background: var(--agua-gradient);
+    color: white;
+    border: none;
+    padding: 16px 24px;
+    border-radius: 12px;
+    font-weight: 600;
+    font-size: 16px;
+    transition: all 0.3s ease;
+    white-space: nowrap;
+}
+
+.search-btn:hover {
+    background: linear-gradient(135deg, #0e7490, #164e63);
+    transform: translateY(-1px);
+    box-shadow: 0 6px 20px rgba(8, 145, 178, 0.4);
+}
+
+.clear-btn {
+    background: #f3f4f6;
+    color: #6b7280;
+    border: none;
+    padding: 16px;
+    border-radius: 12px;
+    text-decoration: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s ease;
+    width: 50px;
+}
+
+.clear-btn:hover {
+    background: #e5e7eb;
+    color: #374151;
+}
+
+/* Estilos personalizados para Select2 */
+.select2-container--default .select2-selection--single {
+    height: 48px;
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    background: #fafafa;
+    transition: all 0.3s ease;
+}
+
+.select2-container--default .select2-selection--single:focus,
+.select2-container--default.select2-container--open .select2-selection--single {
+    border-color: #0891b2;
+    background: white;
+    box-shadow: 0 0 0 3px rgba(8, 145, 178, 0.1);
+}
+
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+    line-height: 44px;
+    padding-left: 16px;
+    color: #374151;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: 46px;
+    right: 16px;
+}
+
+.select2-dropdown {
+    border: 2px solid #0891b2;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(8, 145, 178, 0.15);
+}
+
+.select2-container--default .select2-search--dropdown .select2-search__field {
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 8px 12px;
+}
+
+.select2-results__option {
+    padding: 10px 12px;
+}
+
+.select2-container--default .select2-results__option--highlighted.select2-results__option--selectable {
+    background-color: #0891b2;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__placeholder {
+    color: #9ca3af;
+    font-weight: 500;
+}
+
+@media (max-width: 768px) {
+    .icon-circle {
+        width: 50px;
+        height: 50px;
+        font-size: 20px;
+    }
+    
+    .client-avatar {
+        width: 40px;
+        height: 40px;
+        font-size: 14px;
+    }
+    
+    .action-buttons {
+        flex-direction: row;
+        gap: 4px;
+        justify-content: center;
+    }
+    
+    .action-btn {
+        width: 28px;
+        height: 28px;
+        font-size: 11px;
+    }
+    
+    .table-responsive {
+        border: 0;
+    }
+    
+    .modern-table thead {
+        display: none;
+    }
+    
+    .modern-table tr {
+        display: block;
+        margin-bottom: 1rem;
+        border: 1px solid #e5e7eb;
+        border-radius: 10px;
+        padding: 1rem;
+        background: white;
+    }
+    
+    .modern-table td {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 0.5rem 0;
+        border-bottom: 1px solid #f3f4f6;
+    }
+    
+    .modern-table td:before {
+        content: attr(data-label);
+        font-weight: 600;
+        color: var(--agua-dark);
+        margin-right: 1rem;
+        min-width: 100px;
+    }
+    
+    .modern-table td:last-child {
+        border-bottom: 0;
+    }
+
+    .search-container {
+        padding: 1.5rem;
+        margin: 0 1rem;
+    }
+    
+    .search-input-group {
+        flex-direction: column;
+        gap: 12px;
+    }
+
+    .cliente-select-wrapper {
+        width: 100%;
+        min-width: auto;
+        order: 1;
+    }
+
+    .search-input-wrapper {
+        order: 2;
+        flex: none;
+        width: 100%;
+    }
+
+    .filter-wrapper {
+        order: 3;
+        flex: none;
+        width: 100%;
+        min-width: auto;
+    }
+
+    .search-btn {
+        order: 4;
+        width: 100%;
+        justify-content: center;
+    }
+
+    .clear-btn {
+        order: 5;
+        width: 100%;
+        justify-content: center;
+    }
+    
+    .search-input {
+        font-size: 14px;
+        padding: 14px 16px 14px 48px;
+    }
+    
+    .filter-select {
+        font-size: 14px;
+        padding: 14px 16px;
+    }
+    
+    .search-btn {
+        font-size: 14px;
+        padding: 14px 24px;
+    }
+}
+
+</style>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+    
+    const alerts = document.querySelectorAll('.alert');
+    alerts.forEach(alert => {
+        setTimeout(() => {
+            const bsAlert = new bootstrap.Alert(alert);
+            bsAlert.close();
+        }, 8000);
+    });
+    
+    const rows = document.querySelectorAll('.client-row');
+    rows.forEach((row, index) => {
+        row.style.opacity = '0';
+        row.style.transform = 'translateY(20px)';
+        setTimeout(() => {
+            row.style.transition = 'all 0.3s ease';
+            row.style.opacity = '1';
+            row.style.transform = 'translateY(0)';
+        }, index * 100);
+    });
+});
+
+function focusSearch() {
+    const select = $('#cliente-busqueda-select');
+    if (select.length) {
+        select.select2('open');
+    }
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    if (window.location.hash === '#search') {
+        const select = $('#cliente-busqueda-select');
+        if (select.length) {
+            select.select2('open');
+        }
+    }
+});
+
+$(document).ready(function() {
+    const clienteSelect = $('#cliente-busqueda-select');
+    const form = document.getElementById('busqueda-clientes-form');
+    const searchInput = document.getElementById('buscar-hidden');
+    const clienteIdInput = document.getElementById('cliente-id-hidden');
+
+    if (!clienteSelect.length) {
+        return;
+    }
+
+    clienteSelect.select2({
+        placeholder: 'Seleccionar cliente...',
+        allowClear: true,
+        width: '100%',
+        language: {
+            noResults: function() {
+                return 'No se encontraron clientes';
+            },
+            searching: function() {
+                return 'Buscando...';
+            }
+        },
+        templateResult: function(data) {
+            if (!data.id) return data.text;
+            const option = $(data.element);
+            const nombre = option.data('display-name');
+            const direccion = option.data('direccion');
+            const telefono = option.data('telefono');
+            const telefonoHtml = telefono ? `<div class="select2-option-subtext"><i class="fas fa-phone-alt"></i>${telefono}</div>` : '';
+            return $(`
+                <div class="select2-option">
+                    <div class="select2-option-title"><i class="fas fa-user mr-2 text-green-500"></i>${nombre}</div>
+                    <div class="select2-option-subtext"><i class="fas fa-map-marker-alt"></i>${direccion}</div>
+                    ${telefonoHtml}
+                </div>
+            `);
+        },
+        templateSelection: function(data) {
+            if (!data.id) return data.text;
+            const option = $(data.element);
+            const nombre = option.data('display-name');
+            return $('<span><i class="fas fa-user mr-2 text-green-500"></i>' + nombre + '</span>');
+        }
+    });
+
+    const selectedOption = clienteSelect.find('option:selected');
+    if (selectedOption.length && searchInput) {
+        const searchValue = selectedOption.data('search') || '';
+        if (searchValue && !searchInput.value) {
+            searchInput.value = searchValue;
+        }
+        if (clienteIdInput && !clienteIdInput.value) {
+            clienteIdInput.value = selectedOption.val();
+        }
+    }
+
+    clienteSelect.on('change', function() {
+        if (!searchInput) return;
+        const option = $(this).find(':selected');
+        const value = option.data('search') || '';
+
+        searchInput.value = value;
+        if (clienteIdInput) {
+            clienteIdInput.value = option.val() || '';
+        }
+        if (form) {
+            form.submit();
+        }
+    });
+
+    clienteSelect.on('select2:clear', function() {
+        if (!searchInput) return;
+        searchInput.value = '';
+        if (clienteIdInput) {
+            clienteIdInput.value = '';
+        }
+        if (form) {
+            form.submit();
+        }
+    });
+});
+
+function showConfirmModal(link, accion, event) {
+  event.preventDefault();
+  const modal = document.getElementById('confirm-modal');
+  const confirmBtn = document.getElementById('confirm-action');
+  
+  document.getElementById('modal-text').textContent = `¿Estás seguro que deseas ${accion.toLowerCase()} este cliente?`;
+  
+  confirmBtn.onclick = function() {
+    window.location.href = link.href;
+  };
+  
+  modal.classList.remove('hidden');
+}
+
+function closeConfirmModal() {
+  document.getElementById('confirm-modal').classList.add('hidden');
+}
+</script>
+{% endblock %}

@@ -1,0 +1,76 @@
+{% load static %}
+<footer class="bg-gradient-to-r from-cyan-700 to-blue-800 text-white mt-auto">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+        <div class="py-8">
+            <div class="grid md:grid-cols-3 gap-8">
+                {# Empresa a la izquierda #}
+                <div class="text-center md:text-left flex flex-col items-center md:items-start justify-center gap-2 order-1">
+                    <div class="flex items-center space-x-2 mb-2">
+                        <i class="fas fa-tint text-cyan-300 text-3xl"></i>
+                        <span class="text-xl md:text-2xl font-bold uppercase leading-tight text-white">INVERSIONES LOS DOS RAMÍREZ</span>
+                    </div>
+                    <p class="text-xs md:text-sm text-blue-100 font-semibold tracking-wide">RIF: J-29535312-0</p>
+                    <p class="text-blue-100 text-sm">Gestión eficiente para tu negocio de agua</p>
+                    <p class="text-cyan-100 text-xs mt-1 font-semibold">Fecha de inicio de la empresa: diciembre de 2007</p>
+                </div>
+                {# Enlaces rápidos solo para empresa, al centro #}
+                <div class="flex flex-col items-center justify-center order-2">
+                    {% if request.user.is_authenticated and request.user.tipo_usuario == 'empresa' %}
+                        <h3 class="text-base md:text-lg font-bold uppercase mb-4 text-white tracking-wide text-center">Enlaces Rápidos</h3>
+                        <ul class="space-y-2 text-sm text-center">
+                            <li>
+                                <a href="{% url 'clientes:lista_clientes' %}" class="flex items-center gap-2 justify-center text-blue-100 hover:text-white font-semibold transition border border-white/40 rounded-lg px-4 py-2 shadow-sm hover:bg-white/10">
+                                    <i class="fas fa-users text-cyan-200 text-lg"></i> Lista de Clientes
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{% url 'clientes:nuevo_despacho' %}" class="flex items-center gap-2 justify-center text-blue-100 hover:text-white font-semibold transition border border-white/40 rounded-lg px-4 py-2 shadow-sm hover:bg-white/10">
+                                    <i class="fas fa-truck text-cyan-200 text-lg"></i> Despachos
+                                </a>
+                            </li>
+                            <li>
+                                <a href="{% url 'clientes:historial_despachos' %}" class="flex items-center gap-2 justify-center text-blue-100 hover:text-white font-semibold transition border border-white/40 rounded-lg px-4 py-2 shadow-sm hover:bg-white/10">
+                                    <i class="fas fa-history text-cyan-200 text-lg"></i> Historial de Despachos
+                                </a>
+                            </li>
+                        </ul>
+                    {% endif %}
+                </div>
+                {# Sesión a la derecha #}
+                <div class="text-center md:text-right flex flex-col items-center md:items-end justify-center gap-2 order-3">
+                    <h3 class="text-base md:text-lg font-bold uppercase mb-2 text-white tracking-wide">Sesión</h3>
+                    <div class="text-sm text-blue-100 flex items-center gap-2 font-semibold">
+                        <i class="fas fa-user-circle text-cyan-200 text-lg"></i>
+                        <span>Usuario: <span class="font-bold text-white uppercase">{{ request.user.username }}</span></span>
+                    </div>
+                    <div class="text-sm text-blue-100 flex items-center gap-2 font-semibold">
+                        <i class="fas fa-id-badge text-cyan-200 text-lg"></i>
+                        <span>Nivel: <span class="font-bold text-white uppercase">{{ request.user.tipo_usuario|title }}</span></span>
+                    </div>
+                    <div class="text-sm text-blue-100 flex items-center gap-2 font-semibold">
+                        <i class="fas fa-envelope text-cyan-200 text-lg"></i>
+                        <span>Soporte: <a href="mailto:matiasmartimez15@gmail.com" class="underline hover:text-white text-white font-semibold">matiasmartimez15@gmail.com</a></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="border-t border-blue-200"></div>
+        <div class="py-4 flex flex-col items-center text-xs text-cyan-100">
+            <div class="text-center w-full font-bold uppercase tracking-wide">&copy; {% now "Y" %} Water Delivery - Todos los derechos reservados</div>
+        </div>
+    </div>
+    <style>
+    @media (max-width: 768px) {
+        footer .grid.md\:grid-cols-3 {
+            grid-template-columns: 1fr !important;
+        }
+        footer .order-1, footer .order-2, footer .order-3 {
+            order: unset !important;
+        }
+        footer .flex-col.items-center.justify-center {
+            align-items: stretch !important;
+            text-align: left !important;
+        }
+    }
+    </style>
+</footer>

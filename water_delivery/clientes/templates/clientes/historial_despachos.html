@@ -1,0 +1,749 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Historial de Despachos{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-4 sm:py-6">
+    <div class="max-w-7xl mx-auto px-2 sm:px-4 md:px-6 lg:px-8">
+        <!-- Header del Historial -->
+        <div class="bg-white rounded-xl shadow-lg p-4 sm:p-6 mb-4 sm:mb-6">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center space-y-2 sm:space-y-0 sm:space-x-4">
+                <div class="bg-agua-blue p-2 sm:p-3 rounded-full mb-2 sm:mb-0">
+                    <i class="fas fa-history text-white text-xl sm:text-2xl"></i>
+                </div>
+                <div>
+                    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+                    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+                    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+                    <h1 class="text-lg sm:text-2xl font-bold text-gray-900">Historial de Despachos</h1>
+                    <p class="text-xs sm:text-sm text-gray-600">Últimos 30 días de actividad</p>
+                </div>
+                <div class="flex items-center space-x-2 ml-auto">
+                    <div class="relative group">
+                        <button class="bg-agua-blue hover:bg-blue-600 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors flex items-center">
+                            <i class="fas fa-download mr-2"></i>
+                            Descargar
+                            <i class="fas fa-chevron-down ml-2 text-xs"></i>
+                        </button>
+                        <div class="absolute right-0 mt-1 w-56 bg-white rounded-md shadow-lg py-1 z-10 hidden group-hover:block">
+                            <div class="px-4 py-2 text-xs font-semibold text-gray-500 uppercase tracking-wider">Período</div>
+                            <div class="border-t border-gray-100"></div>
+                            <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" onclick="downloadReport('dia', 'csv')">
+                                <i class="far fa-calendar-day mr-2"></i> Día actual (CSV)
+                            </a>
+                            <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" onclick="downloadReport('semana', 'csv')">
+                                <i class="far fa-calendar-week mr-2"></i> Esta semana (CSV)
+                            </a>
+                            <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" onclick="downloadReport('mes', 'csv')">
+                                <i class="far fa-calendar-alt mr-2"></i> Mes actual (CSV)
+                            </a>
+                            <div class="border-t border-gray-100 my-1"></div>
+                            <div class="px-4 py-1 text-xs font-semibold text-gray-500 uppercase tracking-wider">Formato PDF</div>
+                            <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" onclick="downloadReport('dia', 'pdf')">
+                                <i class="far fa-file-pdf mr-2 text-red-500"></i> Día actual (PDF)
+                            </a>
+                            <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" onclick="downloadReport('semana', 'pdf')">
+                                <i class="far fa-file-pdf mr-2 text-red-500"></i> Esta semana (PDF)
+                            </a>
+                            <a href="#" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100" onclick="downloadReport('mes', 'pdf')">
+                                <i class="far fa-file-pdf mr-2 text-red-500"></i> Mes actual (PDF)
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Lista de días -->
+        <div class="bg-white rounded-xl shadow-lg p-4 sm:p-6">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 sm:mb-6 gap-2">
+                <h2 class="text-lg sm:text-xl font-bold text-gray-900 flex items-center">
+                    <i class="fas fa-calendar-alt mr-2 text-agua-blue"></i>
+                    Resumen por Día
+                </h2>
+                <button onclick="refreshHistorial()" 
+                        class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-2 sm:px-3 py-2 rounded-lg transition-colors text-sm sm:text-base">
+                    <i class="fas fa-sync-alt"></i>
+                </button>
+            </div>
+            
+            <!-- Lista de días -->
+            <div id="historial-container" class="space-y-4 sm:space-y-6">
+                <div class="text-center py-8 text-gray-500">
+                    <i class="fas fa-spinner fa-spin text-4xl mb-4"></i>
+                    <p>Cargando historial...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal de confirmación para marcar como entregado -->
+<div id="confirm-entregar-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 hidden">
+  <div class="bg-white rounded-lg shadow-lg p-6 w-11/12 max-w-sm">
+    <div class="flex items-center mb-4">
+      <div class="bg-green-500 text-white rounded-full p-2 mr-3">
+        <i class="fas fa-check-circle text-xl"></i>
+      </div>
+      <h3 class="text-lg font-bold text-green-700">Confirmar entrega</h3>
+    </div>
+    <p class="text-gray-700 mb-6" id="confirm-entregar-message">
+      ¿Estás seguro de marcar este despacho como entregado?
+    </p>
+    <div class="flex justify-end gap-2">
+      <button onclick="closeConfirmEntregar()" class="px-4 py-2 rounded bg-gray-200 text-gray-700 hover:bg-gray-300">Cancelar</button>
+      <button id="confirm-entregar-accept" class="px-4 py-2 rounded bg-green-500 text-white hover:bg-green-700 font-semibold transition">Sí, marcar</button>
+    </div>
+  </div>
+</div>
+
+<!-- JavaScript -->
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    loadHistorial();
+});
+
+function loadHistorial() {
+    fetch("{% url 'clientes:api_despachos_recientes' %}")
+        .then(response => response.json())
+        .then(data => {
+            const container = document.getElementById('historial-container');
+            
+            if (data.dias.length === 0) {
+                container.innerHTML = `
+                    <div class="text-center py-8 text-gray-500">
+                        <i class="fas fa-truck text-4xl mb-4"></i>
+                        <p>No hay registros de despachos</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            container.innerHTML = data.dias.map(dia => `
+                <div class="border border-gray-200 rounded-lg overflow-hidden">
+                    <div class="bg-gray-50 px-4 py-3 border-b border-gray-200 flex justify-between items-center">
+                        <div>
+                            <h3 class="font-semibold text-gray-900">${dia.fecha}</h3>
+                            <p class="text-sm text-gray-600">
+                                ${dia.total_despachos} despachos • ${dia.total_botellones} botellones
+                            </p>
+                        </div>
+                        <button onclick="toggleDayDetails(this)" 
+                                class="text-agua-blue hover:text-agua-blue-dark">
+                            <i class="fas fa-chevron-down"></i>
+                        </button>
+                    </div>
+                    <div class="hidden day-details">
+                        ${dia.despachos.map(despacho => `
+                            <div class="px-4 py-3 border-b border-gray-100 last:border-0 hover:bg-gray-50">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <p class="font-medium text-gray-900">${despacho.cliente}</p>
+                                        <p class="text-sm text-gray-600">
+                                            ${despacho.cantidad} botellones • ${despacho.hora}
+                                            ${despacho.entregado ? 
+                                                '<span class="ml-2 bg-green-100 text-green-800 text-xs px-2 py-0.5 rounded">Entregado</span>' : 
+                                                '<span class="ml-2 bg-yellow-100 text-yellow-800 text-xs px-2 py-0.5 rounded">Pendiente</span>'
+                                            }
+                                        </p>
+                                        ${despacho.notas ? `
+                                            <p class="text-sm text-gray-500 mt-1 italic">
+                                                <i class="fas fa-sticky-note mr-1"></i>${despacho.notas}
+                                            </p>
+                                        ` : ''}
+                                    </div>
+                                    <div class="flex items-center">
+                                        ${despacho.entregado ? `
+                                            <button onclick="showConfirmEntregar(${despacho.id})" 
+                                                    class="text-green-600 hover:text-green-800 mr-2">
+                                                <i class="fas fa-check-circle"></i>
+                                            </button>
+                                        ` : `
+                                            <button onclick="showConfirmEntregar(${despacho.id})" 
+                                                    class="text-agua-blue hover:text-agua-blue-dark mr-2">
+                                                <i class="fas fa-check-circle"></i>
+                                            </button>
+                                        `}
+                                        <button onclick="marcarEntregado(${despacho.id}, true)" 
+                                                class="text-red-600 hover:text-red-800">
+                                            <i class="fas fa-times-circle"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                </div>
+            `).join('');
+        })
+        .catch(error => {
+            console.error('Error:', error);
+            showMessage('Error al cargar el historial', 'error');
+        });
+}
+
+function toggleDayDetails(button) {
+    const dayDetails = button.closest('.border').querySelector('.day-details');
+    dayDetails.classList.toggle('hidden');
+    
+    const icon = button.querySelector('i');
+    if (dayDetails.classList.contains('hidden')) {
+        icon.classList.remove('fa-chevron-up');
+        icon.classList.add('fa-chevron-down');
+    } else {
+        icon.classList.remove('fa-chevron-down');
+        icon.classList.add('fa-chevron-up');
+    }
+}
+
+function refreshHistorial() {
+    try {
+        const container = document.getElementById('historial-container');
+        if (container) {
+            container.innerHTML = `
+                <div class="text-center py-8 text-gray-500">
+                    <i class="fas fa-spinner fa-spin text-4xl mb-4"></i>
+                    <p>Actualizando historial...</p>
+                </div>
+            `;
+            loadHistorial();
+        }
+    } catch (error) {
+        console.error('Error en refreshHistorial:', error);
+    }
+}
+
+function showMessage(message, type) {
+    // Crear notificación toast
+    const toast = document.createElement('div');
+    toast.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg transition-all duration-300 ${
+        type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+    }`;
+    toast.innerHTML = `
+        <div class="flex items-center space-x-2">
+            <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i>
+            <span>${message}</span>
+        </div>
+    `;
+    
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.remove();
+    }, 3000);
+}
+
+let despachoAEntregar = null;
+function showConfirmEntregar(id) {
+    despachoAEntregar = id;
+    document.getElementById('confirm-entregar-modal').classList.remove('hidden');
+}
+function closeConfirmEntregar() {
+    despachoAEntregar = null;
+    document.getElementById('confirm-entregar-modal').classList.add('hidden');
+}
+document.getElementById('confirm-entregar-accept').onclick = function() {
+    if (despachoAEntregar) {
+        marcarEntregado(despachoAEntregar, true);
+        closeConfirmEntregar();
+    }
+};
+
+async function marcarEntregado(id, confirmado) {
+    if (!confirmado) {
+        showConfirmEntregar(id);
+        return;
+    }
+    try {
+        const response = await fetch("/clientes/api/marcar-entregado/" + id + "/", {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken
+            }
+        });
+        const data = await response.json();
+        if (data.success) {
+            showMessage('Despacho marcado como entregado', 'success');
+            loadHistorial();
+        } else {
+            showMessage(data.message, 'error');
+        }
+    } catch (error) {
+        showMessage('Error al marcar como entregado', 'error');
+    }
+}
+
+// Función para formatear fecha en español
+function formatearFecha(fecha, incluirHora = false) {
+    const opciones = { 
+        year: 'numeric', 
+        month: '2-digit', 
+        day: '2-digit',
+        timeZone: 'America/Santiago'
+    };
+    
+    if (incluirHora) {
+        opciones.hour = '2-digit';
+        opciones.minute = '2-digit';
+    }
+    
+    return new Date(fecha).toLocaleDateString('es-CL', opciones);
+}
+
+// Función para descargar CSV
+function downloadCSV(data, filename) {
+    try {
+        console.log('Datos recibidos por downloadCSV:', data);
+        
+        // Si no hay datos, crear un CSV vacío con un mensaje
+        if (!data || !Array.isArray(data) || data.length === 0) {
+            console.warn('No hay datos para exportar, creando CSV vacío');
+            data = [{
+                'Mensaje': 'No hay datos disponibles para exportar',
+                'Fecha': new Date().toLocaleString('es-CL')
+            }];
+        } else {
+            console.log('Primer elemento de los datos:', data[0]);
+            console.log('Claves del primer elemento:', Object.keys(data[0]));
+        }
+
+        // Definir el orden de las columnas
+        const columnOrder = [
+            'Fecha', 'Hora', 'Cliente', 'Cantidad', 'Estado', 'Notas', 'Dirección', 'Teléfono'
+        ];
+
+        // Filtrar solo las columnas que existen en los datos
+        const availableColumns = columnOrder.filter(column => 
+            data.some(item => item[column] !== undefined)
+        );
+
+        // Crear las líneas del CSV
+        const csvLines = [];
+        
+        // Añadir encabezados
+        csvLines.push(availableColumns.join(','));
+        
+        // Añadir filas de datos
+        data.forEach(item => {
+            const row = availableColumns.map(header => {
+                // Obtener el valor, asegurando que sea un string
+                let value = item[header] !== undefined ? item[header] : '';
+                
+                // Si el valor es un objeto, convertirlo a string
+                if (value && typeof value === 'object') {
+                    value = JSON.stringify(value);
+                }
+                
+                // Escapar comillas dobles y rodear con comillas si es necesario
+                const escaped = String(value || '').replace(/"/g, '""');
+                return `"${escaped}"`;
+            });
+            
+            csvLines.push(row.join(','));
+        });
+
+        // Unir todo el contenido CSV
+        const csvContent = csvLines.join('\n');
+        console.log('Contenido CSV generado:', csvContent);
+
+        // Crear y descargar el archivo
+        const blob = new Blob(["\uFEFF" + csvContent], { 
+            type: 'text/csv;charset=utf-8;' 
+        });
+        
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = filename.endsWith('.csv') ? filename : `${filename}.csv`;
+        document.body.appendChild(link);
+        link.click();
+        
+        // Limpiar después de la descarga
+        setTimeout(() => {
+            document.body.removeChild(link);
+            URL.revokeObjectURL(url);
+            console.log('Descarga completada y recursos liberados');
+        }, 100);
+        
+        return true;
+    } catch (error) {
+        console.error('Error en downloadCSV:', error);
+        showHistorialMessage('Error al generar el archivo: ' + error.message, 'error');
+        return false;
+    }
+}
+
+// Función para descargar reportes
+function downloadReport(tipo, formato) {
+    console.log('Iniciando descarga de reporte, tipo:', tipo, 'formato:', formato);
+    const loadingMessage = showHistorialMessage('Generando reporte, por favor espere...', 'info', 0);
+    
+    try {
+        // Obtener los datos de los elementos del DOM
+        const allDespachos = [];
+        const hoy = new Date();
+        const hoyStr = hoy.toLocaleDateString('es-CL');
+        
+        // Obtener todos los contenedores de día
+        const diasElements = document.querySelectorAll('.border-gray-200.rounded-lg');
+        console.log(`Encontrados ${diasElements.length} días en la página`);
+        
+        // Recorrer los días visibles en la página
+        diasElements.forEach(diaElement => {
+            // Obtener la fecha del encabezado
+            const headerElement = diaElement.querySelector('.bg-gray-50');
+            const fechaElement = headerElement ? headerElement.querySelector('h3') : null;
+            const fecha = fechaElement ? fechaElement.textContent.trim() : 'Fecha desconocida';
+            
+            // Si es un reporte diario, solo procesamos el día de hoy
+            if (tipo === 'dia') {
+                // Obtener la fecha actual en la zona horaria local
+                const hoy = new Date();
+                const hoyLocal = new Date(hoy.getFullYear(), hoy.getMonth(), hoy.getDate());
+                
+                // Convertir la fecha del elemento a objeto Date
+                const [dia, mes, anio] = fecha.split('/').map(Number);
+                const fechaElemento = new Date(anio, mes - 1, dia);
+                
+                console.log('Comparando fechas:', {
+                    fechaElemento: fechaElemento.toISOString().split('T')[0],
+                    hoy: hoyLocal.toISOString().split('T')[0],
+                    fechaOriginal: fecha
+                });
+                
+                // Comparar solo las fechas, ignorando la hora
+                if (fechaElemento.getTime() !== hoyLocal.getTime()) {
+                    console.log(`Saltando día ${fecha} - no es hoy`);
+                    return; // Saltar días que no son hoy
+                } else {
+                    console.log('¡Día actual encontrado!', fecha);
+                }
+            }
+            
+            // Obtener los despachos de este día usando un enfoque más directo
+            let despachosElements = [];
+            
+            // Obtener todos los elementos hijos directos del día que parecen ser despachos
+            const allElements = diaElement.children;
+            const possibleDispatchElements = [];
+            
+            // Filtrar elementos que parecen ser despachos
+            for (let i = 0; i < allElements.length; i++) {
+                const element = allElements[i];
+                // Si el elemento tiene la clase 'day-details', buscar dentro de él
+                if (element.classList.contains('day-details')) {
+                    const childElements = element.children;
+                    for (let j = 0; j < childElements.length; j++) {
+                        possibleDispatchElements.push(childElements[j]);
+                    }
+                } else if (element.matches && element.matches('div[class*="border"], div[class*="p-"]')) {
+                    // O si el elemento parece un contenedor de despacho
+                    possibleDispatchElements.push(element);
+                }
+            }
+            
+            // Filtrar elementos que contienen datos de despacho
+            despachosElements = possibleDispatchElements.filter(el => {
+                const hasClient = el.querySelector('p.font-medium') || el.textContent.match(/[A-Za-z]/);
+                const hasQuantity = el.textContent.match(/\d+\s*botellones?/i);
+                return hasClient && hasQuantity;
+            });
+            
+            console.log(`Procesando día ${fecha} con ${despachosElements.length} despachos`);
+            if (despachosElements.length > 0) {
+                console.log('Primer elemento de despacho:', despachosElements[0]);
+                console.log('Contenido del primer elemento:', despachosElements[0].textContent);
+            } else {
+                console.log('No se encontraron elementos de despacho, revisando estructura completa...');
+                console.log('Estructura del día:', diaElement.outerHTML);
+            }
+            
+            despachosElements.forEach(despachoElement => {
+                // Extraer datos del despacho
+                const clienteElement = despachoElement.querySelector('p.font-medium');
+                const detallesElement = despachoElement.querySelector('p.text-sm');
+                const notasElement = despachoElement.querySelector('p.text-sm:last-child');
+                
+                // Extraer cantidad y hora del texto
+                let cantidad = '0';
+                let hora = '';
+                let estado = 'Pendiente';
+                
+                if (detallesElement) {
+                    const detalles = detallesElement.textContent || '';
+                    // Extraer cantidad (ej: "2 botellones • 10:30")
+                    const cantidadMatch = detalles.match(/(\d+)\s+botellones/);
+                    if (cantidadMatch) cantidad = cantidadMatch[1];
+                    
+                    // Extraer hora (asumiendo formato HH:MM)
+                    const horaMatch = detalles.match(/(\d{1,2}:\d{2})/);
+                    if (horaMatch) hora = horaMatch[1];
+                    
+                    // Verificar estado
+                    if (detalles.includes('Entregado')) {
+                        estado = 'Entregado';
+                    }
+                }
+                
+                allDespachos.push({
+                    'Fecha': fecha,
+                    'Hora': hora,
+                    'Cliente': clienteElement ? clienteElement.textContent.trim() : 'Sin cliente',
+                    'Cantidad': cantidad,
+                    'Estado': estado,
+                    'Notas': notasElement && !notasElement.textContent.includes('Entregado') ? 
+                             notasElement.textContent.trim() : '',
+                    'Dirección': '', // No hay elemento específico para dirección
+                    'Teléfono': ''    // No hay elemento específico para teléfono
+                });
+            });
+        });
+        
+        console.log('Total de despachos encontrados:', allDespachos.length);
+        
+        if (allDespachos.length === 0) {
+            console.log('No se encontraron despachos');
+            allDespachos.push({
+                'Fecha': hoyStr,
+                'Hora': '',
+                'Cliente': 'No hay registros',
+                'Cantidad': '0',
+                'Estado': 'Sin datos',
+                'Notas': 'No se encontraron despachos para la fecha seleccionada',
+                'Dirección': '',
+                'Teléfono': ''
+            });
+        }
+        
+        // Llamar a la función de descarga correspondiente
+        const fechaReporte = hoy.toISOString().split('T')[0];
+        const nombreArchivo = `reporte_${tipo}_${fechaReporte}`;
+        
+        console.log(`Preparando para generar ${formato.toUpperCase()} con`, allDespachos.length, 'despachos');
+        console.log('Primer despacho:', allDespachos[0]);
+        
+        if (formato === 'pdf') {
+            downloadPDF(allDespachos, nombreArchivo);
+        } else {
+            // Asegurarse de que los datos estén en el formato correcto para CSV
+            const datosParaCSV = allDespachos.map(despacho => ({
+                'Fecha': despacho.Fecha || '',
+                'Hora': despacho.Hora || '',
+                'Cliente': despacho.Cliente || '',
+                'Cantidad': despacho.Cantidad || '0',
+                'Estado': despacho.Estado || 'Pendiente',
+                'Notas': despacho.Notas || '',
+                'Dirección': despacho.Dirección || '',
+                'Teléfono': despacho.Teléfono || ''
+            }));
+            
+            console.log('Datos formateados para CSV:', datosParaCSV);
+            downloadCSV(datosParaCSV, nombreArchivo);
+        }
+        
+        if (loadingMessage) loadingMessage.remove();
+        
+    } catch (error) {
+        console.error('Error al generar el reporte:', error);
+        showHistorialMessage('Error al generar el reporte: ' + error.message, 'error');
+        if (loadingMessage) loadingMessage.remove();
+    }
+}
+
+// Función para generar y descargar PDF
+function downloadPDF(data, filename) {
+    try {
+        // Inicializar jsPDF en modo horizontal para más espacio
+        const { jsPDF } = window.jspdf;
+        const doc = new jsPDF({
+            orientation: 'landscape',
+            unit: 'mm',
+            format: 'a4'
+        });
+        
+        // Título del documento
+        const title = 'Reporte de Despachos';
+        const date = new Date().toLocaleDateString('es-CL');
+        
+        // Configuración del encabezado
+        doc.setFontSize(16);
+        doc.text(title, 14, 20);
+        doc.setFontSize(10);
+        doc.setTextColor(100);
+        doc.text(`Generado el: ${date}`, 14, 27);
+        
+        // Configuración de la tabla
+        const headers = [['Fecha', 'Hora', 'Cliente', 'Dirección', 'Teléfono', 'Cantidad', 'Estado', 'Notas']];
+        
+        console.log('Datos para PDF (raw):', JSON.stringify(data, null, 2));
+        
+        // Procesar los datos que recibimos
+        const allDespachos = [];
+        
+        console.log('Tipo de data recibido en downloadPDF:', typeof data);
+        console.log('Contenido de data:', data);
+        
+        // Procesar los datos planos
+        if (Array.isArray(data)) {
+            data.forEach(item => {
+                // Solo procesar si es un despacho válido
+                if (item.Cliente && item.Cliente !== 'No hay registros') {
+                    allDespachos.push({
+                        fecha: item.Fecha || '',
+                        hora: item.Hora || '',
+                        cliente: item.Cliente || 'Sin cliente',
+                        direccion: item['Dirección'] || '',
+                        telefono: item['Teléfono'] || '',
+                        cantidad: item.Cantidad || '0',
+                        entregado: item.Estado === 'Entregado',
+                        notas: item.Notas || ''
+                    });
+                }
+            });
+        }
+        
+        console.log('Datos procesados para PDF:', allDespachos);
+        console.log('Total de despachos encontrados:', allDespachos.length);
+        
+        // Si no hay datos, mostrar un mensaje
+        if (allDespachos.length === 0) {
+            allDespachos.push({
+                fecha: 'Sin datos',
+                hora: '',
+                cliente: 'No hay registros',
+                direccion: '',
+                telefono: '',
+                cantidad: '0',
+                entregado: false,
+                notas: 'No hay despachos para mostrar'
+            });
+        }
+        
+        // Preparar datos para la tabla
+        const tableData = allDespachos.map(item => {
+            // Limitar la longitud de las notas para evitar problemas de ancho
+            const notas = item.notas ? String(item.notas).substring(0, 100) + (item.notas.length > 100 ? '...' : '') : '';
+            
+            return [
+                item.fecha || 'N/A',
+                item.hora || 'N/A',
+                item.cliente || 'N/A',
+                item.direccion || 'N/A',
+                item.telefono || 'N/A',
+                item.cantidad || '0',
+                item.entregado ? 'Entregado' : 'Pendiente',
+                notas
+            ];
+        });
+        
+        // Añadir tabla al documento con configuración optimizada
+        doc.autoTable({
+            head: headers,
+            body: tableData,
+            startY: 35,
+            styles: { 
+                fontSize: 7, // Tamaño de fuente más pequeño
+                cellPadding: 1.5, // Menos padding
+                overflow: 'linebreak',
+                lineWidth: 0.1,
+                lineColor: [200, 200, 200],
+                textColor: [50, 50, 50],
+                font: 'helvetica'
+            },
+            headStyles: {
+                fillColor: [41, 128, 185],
+                textColor: 255,
+                fontStyle: 'bold',
+                fontSize: 7
+            },
+            alternateRowStyles: {
+                fillColor: [245, 248, 250]
+            },
+            columnStyles: {
+                0: { cellWidth: 20 }, // Fecha
+                1: { cellWidth: 15 }, // Hora
+                2: { cellWidth: 30 }, // Cliente
+                3: { cellWidth: 40 }, // Dirección
+                4: { cellWidth: 20 }, // Teléfono
+                5: { cellWidth: 15 }, // Cantidad
+                6: { cellWidth: 20 }, // Estado
+                7: { cellWidth: 40 }  // Notas (con ancho reducido)
+            },
+            margin: { top: 35 },
+            tableWidth: 'wrap',
+            tableLineColor: [200, 200, 200],
+            tableLineWidth: 0.1
+        });
+        
+        // Agregar número de página
+        const pageCount = doc.internal.getNumberOfPages();
+        for (let i = 1; i <= pageCount; i++) {
+            doc.setPage(i);
+            doc.setFontSize(8);
+            doc.setTextColor(150);
+            doc.text(
+                `Página ${i} de ${pageCount}`,
+                doc.internal.pageSize.width - 25,
+                doc.internal.pageSize.height - 10
+            );
+        }
+        
+        // Guardar el PDF
+        doc.save(`${filename}.pdf`);
+        showHistorialMessage('PDF generado correctamente', 'success');
+        return true;
+    } catch (error) {
+        console.error('Error en downloadPDF:', error);
+        throw error;
+    }
+}
+
+// Función para mostrar mensajes con opción de duración personalizada
+function showHistorialMessage(message, type = 'info', duration = 3000) {
+    // Eliminar mensajes existentes para evitar duplicados
+    document.querySelectorAll('.historial-message').forEach(el => el.remove());
+    
+    const container = document.createElement('div');
+    container.className = `historial-message fixed top-4 right-4 p-4 rounded-lg shadow-lg z-50 ${
+        type === 'success' ? 'bg-green-100 border-l-4 border-green-500 text-green-700' :
+        type === 'error' ? 'bg-red-100 border-l-4 border-red-500 text-red-700' :
+        'bg-blue-100 border-l-4 border-blue-500 text-blue-700'
+    }`;
+    
+    container.innerHTML = `
+        <div class="flex items-center">
+            <i class="fas ${
+                type === 'success' ? 'fa-check-circle' :
+                type === 'error' ? 'fa-exclamation-circle' : 'fa-info-circle'
+            } mr-2"></i>
+            <span>${message}</span>
+        </div>
+    `;
+    
+    document.body.appendChild(container);
+    
+    // Si duration es 0, no se cierra automáticamente
+    if (duration > 0) {
+        setTimeout(() => {
+            container.style.opacity = '0';
+            container.style.transition = 'opacity 0.5s';
+            setTimeout(() => container.remove(), 500);
+        }, duration);
+    }
+    
+    return container;
+}
+
+// Sobrescribir la función showMessage existente
+const originalShowMessage = window.showMessage || function() {};
+window.showMessage = function(message, type = 'info', duration = 3000) {
+    // Si se llama con 2 argumentos, asumir que es el mensaje y el tipo
+    if (arguments.length === 2 && ['success', 'error', 'info', 'warning'].includes(arguments[1])) {
+        return showMessage(arguments[0], arguments[1], 3000);
+    }
+    // Si se llama con 3 argumentos, usar los parámetros directamente
+    return showMessage(message, type, duration);
+};
+</script>
+{% endblock %}

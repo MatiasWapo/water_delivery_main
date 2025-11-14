@@ -1,0 +1,1121 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Dashboard de Despachos{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-6">
+    <div class="max-w-7xl mx-auto px-2 sm:px-4 md:px-6 lg:px-8">
+        
+        <div class="bg-white rounded-xl shadow-lg p-4 sm:p-6 mb-6">
+            <div class="flex flex-col lg:flex-row justify-between items-start lg:items-center space-y-4 lg:space-y-0">
+                <div class="flex items-center space-x-2 sm:space-x-4">
+                    <div class="bg-agua-blue p-2 sm:p-3 rounded-full">
+                        <i class="fas fa-truck text-white text-xl sm:text-2xl"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-lg sm:text-2xl font-bold text-gray-900">Dashboard de Despachos</h1>
+                        <div class="flex flex-col sm:flex-row items-start sm:items-center space-y-1 sm:space-y-0 sm:space-x-4 text-xs sm:text-sm text-gray-600">
+                            <span id="current-date" class="flex items-center">
+                                <i class="fas fa-calendar mr-2 text-agua-blue"></i>
+                                <span id="date-display">Cargando...</span>
+                            </span>
+                            <span id="current-time" class="flex items-center">
+                                <i class="fas fa-clock mr-2 text-agua-blue"></i>
+                                <span id="time-display">Cargando...</span>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="grid grid-cols-3 gap-2 sm:gap-4 w-full sm:w-auto mt-4 lg:mt-0">
+                    <div class="bg-green-50 rounded-lg p-2 sm:p-4 text-center">
+                        <div class="text-lg sm:text-2xl font-bold text-green-600" id="total-despachos">0</div>
+                        <div class="text-xs text-green-700">Despachos Hoy</div>
+                    </div>
+                    <div class="bg-blue-50 rounded-lg p-2 sm:p-4 text-center">
+                        <div class="text-lg sm:text-2xl font-bold text-blue-600" id="total-botellones">0</div>
+                        <div class="text-xs text-blue-700">Botellones</div>
+                    </div>
+                    <div class="bg-purple-50 rounded-lg p-2 sm:p-4 text-center">
+                        <div class="text-lg sm:text-2xl font-bold text-purple-600" id="total-clientes">0</div>
+                        <div class="text-xs text-purple-700">Clientes</div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            
+            <!-- Formulario Nuevo Despacho - Primero en móvil, izquierda en desktop -->
+            <div class="lg:col-span-1 order-1 lg:order-1 mt-6 lg:mt-0">
+                <div class="bg-white rounded-xl shadow-lg p-4 sm:p-6 sticky top-6">
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-2">
+                        <h2 class="text-lg sm:text-xl font-bold text-gray-900 flex items-center">
+                            <i class="fas fa-plus-circle mr-2 text-green-500"></i>
+                            Nuevo Despacho
+                        </h2>
+                        <button onclick="toggleClienteForm()" 
+                                class="text-xs sm:text-sm bg-blue-500 text-white px-2 sm:px-3 py-1 rounded-lg hover:bg-blue-600 transition-colors">
+                            <i class="fas fa-user-plus mr-1"></i>
+                            Nuevo Cliente
+                        </button>
+                    </div>
+                    
+                    <form id="despacho-form" class="space-y-4">
+                        {% csrf_token %}
+                        
+                        <div>
+                            <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-user mr-2 text-green-500"></i>
+                                Cliente
+                            </label>
+                            <select id="cliente-select" 
+                                    class="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200"
+                                    required>
+                                <option value="">Seleccionar cliente...</option>
+                            </select>
+                            <div id="cliente-error" class="text-red-500 text-xs mt-1 hidden"></div>
+                            <p class="text-xs text-gray-500 mt-1">
+                                <i class="fas fa-info-circle mr-1"></i>
+                                Escribe para buscar clientes por nombre, apellido o ubicación
+                            </p>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-calendar-alt mr-2 text-green-500"></i>
+                                Fecha del despacho
+                            </label>
+                            <input type="date"
+                                   id="fecha-despacho"
+                                   class="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200"
+                                   required>
+                            <div id="fecha-error" class="text-red-500 text-xs mt-1 hidden"></div>
+                            <p class="text-xs text-gray-500 mt-1">
+                                <i class="fas fa-info-circle mr-1"></i>
+                                Puedes registrar despachos con fecha anterior si fue olvidado.
+                            </p>
+                        </div>
+
+                        
+                        <div>
+                            <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-wine-bottle mr-2 text-green-500"></i>
+                                Cantidad de Botellones
+                            </label>
+                            <div class="flex items-center space-x-2">
+                                <button type="button" onclick="adjustQuantity(-1)" 
+                                        class="bg-gray-200 hover:bg-gray-300 text-gray-700 w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center transition-colors">
+                                    <i class="fas fa-minus"></i>
+                                </button>
+                                <input type="number" 
+                                       id="cantidad-botellones" 
+                                       min="1" 
+                                       max="99"
+                                       value="1"
+                                       class="flex-1 px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 text-center font-bold text-base sm:text-lg"
+                                       required>
+                                <button type="button" onclick="adjustQuantity(1)" 
+                                        class="bg-gray-200 hover:bg-gray-300 text-gray-700 w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center transition-colors">
+                                    <i class="fas fa-plus"></i>
+                                </button>
+                            </div>
+                            <div id="cantidad-error" class="text-red-500 text-xs mt-1 hidden"></div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-sticky-note mr-2 text-green-500"></i>
+                                Notas (Opcional)
+                            </label>
+                            <textarea id="notas" 
+                                      rows="3"
+                                      maxlength="500"
+                                      placeholder="Agregar notas del despacho..."
+                                      class="w-full px-3 sm:px-4 py-2 sm:py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent transition-all duration-200 resize-none"></textarea>
+                            <div id="notas-error" class="text-red-500 text-xs mt-1 hidden"></div>
+                            <p class="text-xs text-gray-500 mt-1">
+                                <i class="fas fa-info-circle mr-1"></i>
+                                Máximo 500 caracteres
+                            </p>
+                        </div>
+                        
+                        <button type="submit" 
+                                class="w-full bg-gradient-to-r from-green-500 to-green-600 text-white py-2 sm:py-3 px-4 rounded-lg font-medium hover:from-green-600 hover:to-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all duration-200 transform hover:scale-105 shadow-lg text-base sm:text-lg">
+                            <i class="fas fa-save mr-2"></i>
+                            <span id="btn-text">Registrar Despacho</span>
+                        </button>
+                    </form>
+                    
+                    <div id="nuevo-cliente-form" class="hidden mt-6 p-4 bg-blue-50 rounded-lg border-2 border-blue-200">
+                        <h3 class="text-base sm:text-lg font-medium text-blue-900 mb-4 flex items-center">
+                            <i class="fas fa-user-plus mr-2"></i>
+                            Agregar Nuevo Cliente
+                        </h3>
+                        <form id="cliente-form" class="space-y-3">
+                            {% csrf_token %}
+                            <div>
+                                <input type="text" 
+                                       id="cliente-nombre" 
+                                       placeholder="Nombre del cliente"
+                                       maxlength="50"
+                                       pattern="[A-Za-záéíóúÁÉÍÓÚñÑ\s]+"
+                                       title="Solo letras y espacios permitidos"
+                                       class="w-full px-2 sm:px-3 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                       required>
+                                <div id="modal-nombre-error" class="text-red-500 text-xs mt-1 hidden"></div>
+                            </div>
+                            <div>
+                                <input type="text" 
+                                       id="cliente-apellido" 
+                                       placeholder="Apellido del cliente"
+                                       maxlength="50"
+                                       pattern="[A-Za-záéíóúÁÉÍÓÚñÑ\s]+"
+                                       title="Solo letras y espacios permitidos"
+                                       class="w-full px-2 sm:px-3 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                                       required>
+                                <div id="modal-apellido-error" class="text-red-500 text-xs mt-1 hidden"></div>
+                            </div>
+                            <div>
+                                <input type="text" 
+                                       id="cliente-telefono" 
+                                       placeholder="Teléfono"
+                                       maxlength="13"
+                                       pattern="[0-9+\-\s()]+"
+                                       title="Solo números, espacios, guiones, paréntesis y + permitidos"
+                                       class="w-full px-2 sm:px-3 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <div id="modal-telefono-error" class="text-red-500 text-xs mt-1 hidden"></div>
+                            </div>
+                            <div>
+                                <textarea id="cliente-direccion" 
+                                          rows="2"
+                                          placeholder="Dirección"
+                                          maxlength="200"
+                                          class="w-full px-2 sm:px-3 py-2 border border-blue-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent resize-none"
+                                          required></textarea>
+                                <div id="modal-direccion-error" class="text-red-500 text-xs mt-1 hidden"></div>
+                            </div>
+
+                            <div class="flex flex-col sm:flex-row space-y-2 sm:space-y-0 sm:space-x-2">
+                                <button type="submit" 
+                                        class="flex-1 bg-blue-500 text-white py-2 px-3 rounded-lg hover:bg-blue-600 transition-colors text-sm sm:text-base">
+                                    <i class="fas fa-check mr-1"></i>
+                                    Guardar
+                                </button>
+                                <button type="button" 
+                                        onclick="toggleClienteForm()" 
+                                        class="flex-1 bg-gray-500 text-white py-2 px-3 rounded-lg hover:bg-gray-600 transition-colors text-sm sm:text-base">
+                                    <i class="fas fa-times mr-1"></i>
+                                    Cancelar
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Lista de Despachos - Segundo en móvil, derecha en desktop -->
+            <div class="lg:col-span-2 order-2 lg:order-2">
+                <div class="bg-white rounded-xl shadow-lg p-4 sm:p-6">
+                    <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-6 gap-2">
+                        <h2 class="text-lg sm:text-xl font-bold text-gray-900 flex items-center gap-2">
+                            <i class="fas fa-list text-agua-blue"></i>
+                            <span>Despachos del</span>
+                            <span id="despachos-date-label" class="capitalize">Hoy</span>
+                        </h2>
+                        <div class="flex items-center space-x-2">
+                            <button type="button"
+                                    onclick="changeSelectedDate(-1)"
+                                    class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-2 sm:px-3 py-2 rounded-lg transition-colors"
+                                    title="Ver día anterior">
+                                <i class="fas fa-chevron-left"></i>
+                            </button>
+                            <button type="button"
+                                    onclick="openFechaSelector()"
+                                    class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-2 sm:px-3 py-2 rounded-lg transition-colors"
+                                    title="Seleccionar fecha">
+                                <i class="fas fa-calendar-alt"></i>
+                            </button>
+                            <button type="button"
+                                    onclick="changeSelectedDate(1)"
+                                    class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-2 sm:px-3 py-2 rounded-lg transition-colors"
+                                    title="Ver día siguiente">
+                                <i class="fas fa-chevron-right"></i>
+                            </button>
+                            <button onclick="refreshDespachos()" 
+                                    class="bg-gray-100 hover:bg-gray-200 text-gray-700 px-2 sm:px-3 py-2 rounded-lg transition-colors">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div id="despachos-list" class="space-y-3">
+                        <div class="text-center py-8 text-gray-500">
+                            <i class="fas fa-spinner fa-spin text-4xl mb-4"></i>
+                            <p>Cargando despachos...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="confirm-cancelar-despacho-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 hidden">
+  <div class="bg-white rounded-lg shadow-lg p-6 w-11/12 max-w-sm">
+    <div class="flex items-center mb-4">
+      <div class="bg-yellow-500 text-white rounded-full p-2 mr-3">
+        <i class="fas fa-exclamation-triangle text-xl"></i>
+      </div>
+      <h3 class="text-lg font-bold text-yellow-700">Confirmar cancelación descontada</h3>
+    </div>
+    <p class="text-gray-700 mb-6" id="confirm-cancelar-despacho-message">Al confirmar, el despacho se marcará como cancelado y se registrará el pago correspondiente. ¿Deseas continuar?</p>
+    <div class="flex justify-end gap-2">
+      <button id="confirm-cancelar-despacho-cancel" class="px-4 py-2 rounded bg-gray-200 text-gray-700 hover:bg-gray-300">No, volver</button>
+      <button id="confirm-cancelar-despacho-accept" class="px-4 py-2 rounded bg-yellow-500 text-white hover:bg-yellow-600 font-semibold transition">Sí, cancelar y descontar</button>
+    </div>
+  </div>
+</div>
+
+<div id="confirm-eliminar-despacho-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 hidden">
+  <div class="bg-white rounded-lg shadow-lg p-6 w-11/12 max-w-sm">
+    <div class="flex items-center mb-4">
+      <div class="bg-red-500 text-white rounded-full p-2 mr-3">
+        <i class="fas fa-trash-alt text-xl"></i>
+      </div>
+      <h3 class="text-lg font-bold text-red-700">Confirmar eliminación</h3>
+    </div>
+    <p class="text-gray-700 mb-6" id="confirm-eliminar-despacho-message">¿Estás seguro de que deseas eliminar este despacho?</p>
+    <div class="flex justify-end gap-2">
+      <button onclick="closeConfirmEliminarDespacho()" class="px-4 py-2 rounded bg-gray-200 text-gray-700 hover:bg-gray-300">Cancelar</button>
+      <button id="confirm-eliminar-despacho-accept" class="px-4 py-2 rounded bg-red-500 text-white hover:bg-red-700 font-semibold transition">Sí, eliminar</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const API_URLS = {
+    clientes: "{% url 'clientes:api_clientes' %}",
+    despachos: "{% url 'clientes:api_despachos_hoy' %}",
+    crearDespacho: "{% url 'clientes:api_crear_despacho' %}",
+    crearCliente: "{% url 'clientes:api_crear_cliente' %}",
+    eliminarDespacho: "/clientes/api/eliminar-despacho/",
+    marcarEntregado: "/clientes/api/marcar-entregado/",
+    marcarCancelado: "/clientes/api/marcar-cancelado/"
+};
+
+const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+
+let clientesData = [];
+let selectedDate = null;
+let cancelToggleState = null;
+
+function getLocalISODate(dateObj = new Date()) {
+    const tzoffset = dateObj.getTimezoneOffset() * 60000;
+    return new Date(dateObj.getTime() - tzoffset).toISOString().slice(0, 10);
+}
+
+document.addEventListener('DOMContentLoaded', function() {
+    updateDateTime();
+    setInterval(updateDateTime, 1000);
+    
+    const todayStr = getLocalISODate();
+    const fechaInput = document.getElementById('fecha-despacho');
+    fechaInput.value = todayStr;
+    fechaInput.max = todayStr;
+    selectedDate = todayStr;
+    updateDateLabel();
+
+    loadClientes();
+    loadDespachos();
+    
+    document.getElementById('despacho-form').addEventListener('submit', handleDespachoSubmit);
+    document.getElementById('cliente-form').addEventListener('submit', handleClienteSubmit);
+});
+
+function updateDateTime() {
+    const now = new Date();
+    
+    const dateOptions = { 
+        weekday: 'long', 
+        year: 'numeric', 
+        month: 'long', 
+        day: 'numeric' 
+    };
+    const dateStr = now.toLocaleDateString('es-ES', dateOptions);
+    document.getElementById('date-display').textContent = dateStr;
+    
+    const timeStr = now.toLocaleTimeString('es-ES', { 
+        hour: '2-digit', 
+        minute: '2-digit', 
+        second: '2-digit' 
+    });
+    document.getElementById('time-display').textContent = timeStr;
+}
+
+function adjustQuantity(change) {
+    const input = document.getElementById('cantidad-botellones');
+    const currentValue = parseInt(input.value) || 1;
+    const newValue = Math.max(1, currentValue + change);
+    input.value = newValue;
+}
+
+function toggleClienteForm() {
+    const form = document.getElementById('nuevo-cliente-form');
+    form.classList.toggle('hidden');
+    
+    if (!form.classList.contains('hidden')) {
+        document.getElementById('cliente-nombre').focus();
+    }
+}
+
+async function loadClientes() {
+    try {
+        const response = await fetch(API_URLS.clientes);
+        const data = await response.json();
+        clientesData = data.clientes;
+        const select = document.getElementById('cliente-select');
+        select.innerHTML = '<option value="">Seleccionar cliente...</option>';
+        data.clientes.forEach(cliente => {
+            const option = document.createElement('option');
+            option.value = cliente.id;
+            option.textContent = `${cliente.nombre} - ${cliente.direccion}`;
+            select.appendChild(option);
+        });
+    } catch (error) {
+        console.error('Error cargando clientes:', error);
+        showMessage('Error al cargar clientes', 'error');
+    }
+}
+
+
+
+async function loadDespachos() {
+    try {
+        const url = new URL(API_URLS.despachos, window.location.origin);
+        if (selectedDate) {
+            url.searchParams.append('fecha', selectedDate);
+        }
+        const response = await fetch(url);
+        const data = await response.json();
+        if (!data.success) {
+            showMessage(data.message || 'No se pudieron cargar los despachos.', 'error');
+            return;
+        }
+        selectedDate = data.fecha;
+        const fechaInput = document.getElementById('fecha-despacho');
+        if (fechaInput && selectedDate) {
+            fechaInput.value = selectedDate;
+        }
+        updateDateLabel();
+        
+        const container = document.getElementById('despachos-list');
+        
+        if (data.despachos.length === 0) {
+            container.innerHTML = `
+                <div class="text-center py-8 text-gray-500">
+                    <i class="fas fa-truck text-4xl mb-4"></i>
+                    <p>No hay despachos registrados para esta fecha.</p>
+                    <p class="text-sm">Registra un despacho para verlo aquí.</p>
+                </div>
+            `;
+            updateStats([]);
+            return;
+        }
+        
+        container.innerHTML = data.despachos.map(despacho => `
+            <div class="bg-gray-50 rounded-lg p-4 border-l-4 ${despacho.cancelado ? 'border-red-500' : despacho.entregado ? 'border-green-500' : 'border-yellow-500'} hover:shadow-md transition-shadow">
+                <div class="flex flex-col sm:flex-row justify-between items-start gap-3">
+                    <div class="flex-1 min-w-0">
+                        <div class="flex flex-wrap items-center gap-2 mb-2">
+                            <h3 class="font-semibold text-gray-900 truncate">${despacho.cliente}</h3>
+                            <span class="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full whitespace-nowrap">
+                                ${despacho.cantidad} botellones
+                            </span>
+                            <span class="text-sm text-gray-500 whitespace-nowrap">${despacho.hora}</span>
+                            <span class="text-xs px-2 py-1 rounded-full whitespace-nowrap ${despacho.cancelado ? 'bg-red-500 text-white' : 'bg-yellow-100 text-yellow-800'}">
+                                ${despacho.cancelado ? 'Pago descontado' : 'Pago pendiente'}
+                            </span>
+                            <span class="text-xs px-2 py-1 rounded-full whitespace-nowrap ${despacho.entregado ? 'bg-green-500 text-white' : 'bg-blue-100 text-blue-800'}">
+                                ${despacho.entregado ? 'Entregado' : 'Por entregar'}
+                            </span>
+                        </div>
+                        <p class="text-sm text-gray-600 mb-1 truncate">
+                            <i class="fas fa-map-marker-alt mr-1"></i>
+                            ${despacho.direccion}
+                        </p>
+                        ${despacho.notas ? `<p class="text-sm text-gray-500 italic truncate">${despacho.notas}</p>` : ''}
+                    </div>
+                    <div class="flex space-x-2 flex-shrink-0">
+                        <button onclick="toggleEntregado(${despacho.id}, ${despacho.entregado ? 'false' : 'true'})" 
+                                class="p-2 rounded-lg transition-colors ${despacho.entregado ? 'bg-green-500 text-white hover:bg-green-600' : 'text-green-500 hover:text-green-700 hover:bg-green-50'}" 
+                                title="${despacho.entregado ? 'Marcar como pendiente' : 'Marcar como entregado'}">
+                            <i class="fas ${despacho.entregado ? 'fa-check-circle' : 'fa-check'}"></i>
+                        </button>
+                        <button onclick="handleCancelToggle(${despacho.id}, ${despacho.cancelado ? 'false' : 'true'})" 
+                                class="p-2 rounded-lg transition-colors ${despacho.cancelado ? 'bg-yellow-500 text-white hover:bg-yellow-600' : 'text-yellow-600 hover:text-yellow-800 hover:bg-yellow-50'}" 
+                                title="${despacho.cancelado ? 'Revertir pago descontado' : 'Registrar pago descontado'}">
+                            <i class="fas ${despacho.cancelado ? 'fa-money-check' : 'fa-money-check-alt'}"></i>
+                        </button>
+                        <button onclick="showConfirmEliminarDespacho(${despacho.id})" 
+                                class="text-red-500 hover:text-red-700 p-2 rounded-lg hover:bg-red-50 transition-colors" title="Eliminar">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+        `).join('');
+        
+        updateStats(data.despachos);
+    } catch (error) {
+        console.error('Error cargando despachos:', error);
+        showMessage('Error al cargar despachos', 'error');
+    }
+}
+
+function updateStats(despachos) {
+    document.getElementById('total-despachos').textContent = despachos.length;
+    document.getElementById('total-botellones').textContent = despachos.reduce((sum, d) => sum + d.cantidad, 0);
+    document.getElementById('total-clientes').textContent = new Set(despachos.map(d => d.cliente)).size;
+}
+
+function updateDateLabel() {
+    const label = document.getElementById('despachos-date-label');
+    if (!selectedDate) {
+        label.textContent = 'Hoy';
+        return;
+    }
+    const todayStr = getLocalISODate();
+    if (selectedDate === todayStr) {
+        label.textContent = 'Hoy';
+    } else {
+        const [year, month, day] = selectedDate.split('-').map(Number);
+        const dateObj = new Date(year, month - 1, day);
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        label.textContent = dateObj.toLocaleDateString('es-ES', options);
+    }
+}
+
+function changeSelectedDate(deltaDays) {
+    if (!selectedDate) {
+        selectedDate = getLocalISODate();
+    }
+    const [year, month, day] = selectedDate.split('-').map(Number);
+    const current = new Date(year, month - 1, day);
+    current.setDate(current.getDate() + deltaDays);
+    const newDate = getLocalISODate(current);
+    const todayStr = getLocalISODate();
+    if (newDate > todayStr) {
+        showMessage('No puedes seleccionar una fecha futura.', 'error');
+        return;
+    }
+    selectedDate = newDate;
+    const fechaInput = document.getElementById('fecha-despacho');
+    fechaInput.value = selectedDate;
+    loadDespachos();
+}
+
+function openFechaSelector() {
+    const input = document.createElement('input');
+    input.type = 'date';
+    input.max = getLocalISODate();
+    input.value = selectedDate || input.max;
+    input.classList.add('hidden');
+    document.body.appendChild(input);
+    input.addEventListener('change', () => {
+        if (input.value) {
+            selectedDate = input.value;
+            document.getElementById('fecha-despacho').value = selectedDate;
+            loadDespachos();
+        }
+        input.remove();
+    });
+    input.click();
+}
+
+// Funciones de validación
+function showError(elementId, message) {
+    const errorDiv = document.getElementById(elementId);
+    errorDiv.textContent = message;
+    errorDiv.classList.remove('hidden');
+}
+
+function hideError(elementId) {
+    const errorDiv = document.getElementById(elementId);
+    errorDiv.classList.add('hidden');
+}
+
+// Validaciones en tiempo real
+document.addEventListener('DOMContentLoaded', function() {
+    const clienteSelect = document.getElementById('cliente-select');
+    const cantidadInput = document.getElementById('cantidad-botellones');
+    const notasTextarea = document.getElementById('notas');
+    const fechaDespachoInput = document.getElementById('fecha-despacho');
+    
+    // Validación de cliente
+    if (clienteSelect) {
+        clienteSelect.addEventListener('change', function() {
+            if (!this.value) {
+                showError('cliente-error', 'Por favor selecciona un cliente.');
+                this.classList.add('border-red-500');
+                this.classList.remove('border-green-500');
+            } else {
+                hideError('cliente-error');
+                this.classList.remove('border-red-500');
+                this.classList.add('border-green-500');
+            }
+        });
+    }
+    
+    // Validación de cantidad
+    if (cantidadInput) {
+        cantidadInput.addEventListener('input', function() {
+            const value = parseInt(this.value);
+            
+            if (isNaN(value) || value < 1) {
+                showError('cantidad-error', 'La cantidad debe ser al menos 1 botellón.');
+                this.classList.add('border-red-500');
+                this.classList.remove('border-green-500');
+            } else if (value > 99) {
+                showError('cantidad-error', 'La cantidad no puede ser mayor a 99 botellones.');
+                this.classList.add('border-red-500');
+                this.classList.remove('border-green-500');
+            } else {
+                hideError('cantidad-error');
+                this.classList.remove('border-red-500');
+                this.classList.add('border-green-500');
+            }
+        });
+    }
+    
+    // Validación de notas
+    if (notasTextarea) {
+        notasTextarea.addEventListener('input', function() {
+            const value = this.value.trim();
+            
+            if (value.length > 500) {
+                showError('notas-error', 'Las notas no pueden tener más de 500 caracteres.');
+                this.classList.add('border-red-500');
+                this.classList.remove('border-green-500');
+            } else {
+                hideError('notas-error');
+                this.classList.remove('border-red-500');
+                this.classList.add('border-green-500');
+            }
+        });
+    }
+});
+
+async function handleDespachoSubmit(e) {
+    e.preventDefault();
+    
+    const clienteId = document.getElementById('cliente-select').value;
+    const cantidad = document.getElementById('cantidad-botellones').value;
+    const notas = document.getElementById('notas').value;
+    const fecha = document.getElementById('fecha-despacho').value;
+    
+    // Validaciones antes de enviar
+    let hasErrors = false;
+    
+    if (!clienteId) {
+        showError('cliente-error', 'Por favor selecciona un cliente.');
+        hasErrors = true;
+    }
+
+    const todayStr = new Date().toISOString().slice(0, 10);
+    if (!fecha) {
+        showError('fecha-error', 'Por favor selecciona una fecha.');
+        hasErrors = true;
+    } else if (fecha > todayStr) {
+        showError('fecha-error', 'No puedes registrar despachos en fechas futuras.');
+        hasErrors = true;
+    }
+
+    const cantidadNum = parseInt(cantidad);
+    if (isNaN(cantidadNum) || cantidadNum < 1 || cantidadNum > 99) {
+        showError('cantidad-error', 'La cantidad debe ser entre 1 y 99 botellones.');
+        hasErrors = true;
+    }
+    
+    if (notas.length > 500) {
+        showError('notas-error', 'Las notas no pueden tener más de 500 caracteres.');
+        hasErrors = true;
+    }
+    
+    if (hasErrors) {
+        showMessage('Por favor, corrige los errores antes de enviar el formulario.', 'error');
+        return;
+    }
+    
+    const btnText = document.getElementById('btn-text');
+    btnText.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Guardando...';
+    
+    try {
+        const response = await fetch(API_URLS.crearDespacho, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({
+                cliente_id: clienteId,
+                cantidad: cantidad,
+                notas: notas,
+                fecha: fecha
+            })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showMessage('Despacho registrado exitosamente', 'success');
+            document.getElementById('despacho-form').reset();
+            document.getElementById('cantidad-botellones').value = 1;
+            document.getElementById('fecha-despacho').value = selectedDate;
+            loadDespachos();
+        } else {
+            showMessage(data.message, 'error');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showMessage('Error al registrar despacho', 'error');
+    } finally {
+        btnText.innerHTML = 'Registrar Despacho';
+    }
+}
+
+// Validaciones para el formulario modal de cliente
+document.addEventListener('DOMContentLoaded', function() {
+    const modalNombreInput = document.getElementById('cliente-nombre');
+    const modalApellidoInput = document.getElementById('cliente-apellido');
+    const modalTelefonoInput = document.getElementById('cliente-telefono');
+    const modalDireccionInput = document.getElementById('cliente-direccion');
+    
+    // Validación de nombre en modal
+    if (modalNombreInput) {
+        modalNombreInput.addEventListener('input', function() {
+            const value = this.value.trim();
+            
+            if (value.length === 0) {
+                showError('modal-nombre-error', 'El nombre es obligatorio.');
+                this.classList.add('border-red-500');
+                this.classList.remove('border-green-500');
+            } else if (value.length < 2) {
+                showError('modal-nombre-error', 'El nombre debe tener al menos 2 caracteres.');
+                this.classList.add('border-red-500');
+                this.classList.remove('border-green-500');
+            } else if (value.length > 50) {
+                showError('modal-nombre-error', 'El nombre no puede tener más de 50 caracteres.');
+                this.classList.add('border-red-500');
+                this.classList.remove('border-green-500');
+            } else if (!/^[A-Za-záéíóúÁÉÍÓÚñÑ\s]+$/.test(value)) {
+                showError('modal-nombre-error', 'El nombre solo puede contener letras y espacios.');
+                this.classList.add('border-red-500');
+                this.classList.remove('border-green-500');
+            } else {
+                hideError('modal-nombre-error');
+                this.classList.remove('border-red-500');
+                this.classList.add('border-green-500');
+            }
+        });
+    }
+    
+    // Validación de apellido en modal
+    if (modalApellidoInput) {
+        modalApellidoInput.addEventListener('input', function() {
+            const value = this.value.trim();
+            
+            if (value.length === 0) {
+                showError('modal-apellido-error', 'El apellido es obligatorio.');
+                this.classList.add('border-red-500');
+                this.classList.remove('border-green-500');
+            } else if (value.length < 2) {
+                showError('modal-apellido-error', 'El apellido debe tener al menos 2 caracteres.');
+                this.classList.add('border-red-500');
+                this.classList.remove('border-green-500');
+            } else if (value.length > 50) {
+                showError('modal-apellido-error', 'El apellido no puede tener más de 50 caracteres.');
+                this.classList.add('border-red-500');
+                this.classList.remove('border-green-500');
+            } else if (!/^[A-Za-záéíóúÁÉÍÓÚñÑ\s]+$/.test(value)) {
+                showError('modal-apellido-error', 'El apellido solo puede contener letras y espacios.');
+                this.classList.add('border-red-500');
+                this.classList.remove('border-green-500');
+            } else {
+                hideError('modal-apellido-error');
+                this.classList.remove('border-red-500');
+                this.classList.add('border-green-500');
+            }
+        });
+    }
+    
+    // Validación de teléfono en modal
+    if (modalTelefonoInput) {
+        modalTelefonoInput.addEventListener('input', function() {
+            const value = this.value.trim();
+            
+            if (value.length === 0) {
+                hideError('modal-telefono-error');
+                this.classList.remove('border-red-500', 'border-green-500');
+                return; // Teléfono es opcional
+            }
+            
+            if (value.length > 13) {
+                showError('modal-telefono-error', 'El teléfono no puede tener más de 13 caracteres.');
+                this.classList.add('border-red-500');
+                this.classList.remove('border-green-500');
+            } else if (!/^[0-9+\-\s()]+$/.test(value)) {
+                showError('modal-telefono-error', 'El teléfono solo puede contener números, espacios, guiones, paréntesis y +.');
+                this.classList.add('border-red-500');
+                this.classList.remove('border-green-500');
+            } else {
+                const digitos = value.match(/\d/g);
+                if (digitos && digitos.length < 7) {
+                    showError('modal-telefono-error', 'El teléfono debe tener al menos 7 dígitos.');
+                    this.classList.add('border-red-500');
+                    this.classList.remove('border-green-500');
+                } else if (digitos && digitos.length > 11) {
+                    showError('modal-telefono-error', 'El teléfono no puede tener más de 11 dígitos.');
+                    this.classList.add('border-red-500');
+                    this.classList.remove('border-green-500');
+                } else {
+                    hideError('modal-telefono-error');
+                    this.classList.remove('border-red-500');
+                    this.classList.add('border-green-500');
+                }
+            }
+        });
+    }
+    
+    // Validación de dirección en modal
+    if (modalDireccionInput) {
+        modalDireccionInput.addEventListener('input', function() {
+            const value = this.value.trim();
+            
+            if (value.length === 0) {
+                showError('modal-direccion-error', 'La dirección es obligatoria.');
+                this.classList.add('border-red-500');
+                this.classList.remove('border-green-500');
+            } else if (value.length < 10) {
+                showError('modal-direccion-error', 'La dirección debe tener al menos 10 caracteres.');
+                this.classList.add('border-red-500');
+                this.classList.remove('border-green-500');
+            } else if (value.length > 200) {
+                showError('modal-direccion-error', 'La dirección no puede tener más de 200 caracteres.');
+                this.classList.add('border-red-500');
+                this.classList.remove('border-green-500');
+            } else {
+                hideError('modal-direccion-error');
+                this.classList.remove('border-red-500');
+                this.classList.add('border-green-500');
+            }
+        });
+    }
+});
+
+async function handleClienteSubmit(e) {
+    e.preventDefault();
+    const nombre = document.getElementById('cliente-nombre').value.trim();
+    const apellido = document.getElementById('cliente-apellido').value.trim();
+    const telefono = document.getElementById('cliente-telefono').value.trim();
+    const direccion = document.getElementById('cliente-direccion').value.trim();
+    
+    // Validaciones antes de enviar
+    let hasErrors = false;
+    
+    if (nombre.length < 2) {
+        showError('modal-nombre-error', 'El nombre debe tener al menos 2 caracteres.');
+        hasErrors = true;
+    }
+    
+    if (apellido.length < 2) {
+        showError('modal-apellido-error', 'El apellido debe tener al menos 2 caracteres.');
+        hasErrors = true;
+    }
+    
+    if (direccion.length < 10) {
+        showError('modal-direccion-error', 'La dirección debe tener al menos 10 caracteres.');
+        hasErrors = true;
+    }
+    
+    if (hasErrors) {
+        showMessage('Por favor, corrige los errores antes de enviar el formulario.', 'error');
+        return;
+    }
+    
+    try {
+        const response = await fetch(API_URLS.crearCliente, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({
+                nombre: nombre,
+                apellido: apellido,
+                telefono: telefono,
+                direccion: direccion
+            })
+        });
+        const data = await response.json();
+        if (data.success) {
+            showMessage('Cliente agregado exitosamente', 'success');
+            document.getElementById('cliente-form').reset();
+            toggleClienteForm();
+            loadClientes();
+        } else {
+            showMessage(data.message, 'error');
+        }
+    } catch (error) {
+        console.error('Error al agregar cliente', error);
+        showMessage('Error al agregar cliente', 'error');
+    }
+}
+
+let despachoAEliminar = null;
+
+function showConfirmEliminarDespacho(id) {
+    despachoAEliminar = id;
+    document.getElementById('confirm-eliminar-despacho-modal').classList.remove('hidden');
+}
+function closeConfirmEliminarDespacho() {
+    despachoAEliminar = null;
+    document.getElementById('confirm-eliminar-despacho-modal').classList.add('hidden');
+}
+document.getElementById('confirm-eliminar-despacho-accept').onclick = function() {
+    if (despachoAEliminar) {
+        deleteDespacho(despachoAEliminar, true);
+        closeConfirmEliminarDespacho();
+    }
+};
+
+async function deleteDespacho(id, confirmado) {
+    if (!confirmado) {
+        showConfirmEliminarDespacho(id);
+        return;
+    }
+    try {
+        const response = await fetch(API_URLS.eliminarDespacho + id + '/', {
+            method: 'POST',
+            headers: {
+                'X-CSRFToken': csrfToken
+            }
+        });
+        const data = await response.json();
+        if (data.success) {
+            showMessage('Despacho eliminado exitosamente', 'success');
+            loadDespachos();
+        } else {
+            showMessage(data.message, 'error');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showMessage('Error al eliminar despacho', 'error');
+    }
+}
+
+async function toggleEntregado(id, nuevoEstado) {
+    try {
+        const response = await fetch(API_URLS.marcarEntregado + id + '/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({ entregado: nuevoEstado })
+        });
+        const data = await response.json();
+        if (data.success) {
+            showMessage(data.message || (data.entregado ? 'Despacho entregado.' : 'Despacho pendiente.'), 'success');
+            loadDespachos();
+        } else {
+            showMessage(data.message, 'error');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showMessage('Error al actualizar entrega', 'error');
+    }
+}
+
+async function handleCancelToggle(id, nuevoEstado) {
+    if (nuevoEstado) {
+        // Confirmar antes de registrar pago descontado
+        const modal = document.getElementById('confirm-cancelar-despacho-modal');
+        modal.classList.remove('hidden');
+        cancelToggleState = { id, nuevoEstado };
+        return;
+    }
+    await marcarCancelado(id, nuevoEstado);
+}
+
+const confirmCancelAcceptBtn = document.getElementById('confirm-cancelar-despacho-accept');
+if (confirmCancelAcceptBtn) {
+    confirmCancelAcceptBtn.onclick = async function() {
+        if (cancelToggleState) {
+            await marcarCancelado(cancelToggleState.id, cancelToggleState.nuevoEstado);
+            cancelToggleState = null;
+            document.getElementById('confirm-cancelar-despacho-modal').classList.add('hidden');
+        }
+    };
+}
+
+const confirmCancelCancelBtn = document.getElementById('confirm-cancelar-despacho-cancel');
+if (confirmCancelCancelBtn) {
+    confirmCancelCancelBtn.onclick = function() {
+        cancelToggleState = null;
+        document.getElementById('confirm-cancelar-despacho-modal').classList.add('hidden');
+    };
+}
+
+async function marcarCancelado(id, nuevoEstado) {
+    try {
+        const response = await fetch(API_URLS.marcarCancelado + id + '/', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'X-CSRFToken': csrfToken
+            },
+            body: JSON.stringify({ cancelado: nuevoEstado })
+        });
+        
+        const data = await response.json();
+        
+        if (data.success) {
+            showMessage(data.message || 'Estado actualizado', 'success');
+            loadDespachos();
+        } else {
+            showMessage(data.message, 'error');
+        }
+    } catch (error) {
+        console.error('Error:', error);
+        showMessage('Error al actualizar estado', 'error');
+    }
+}
+
+function refreshDespachos() {
+    loadDespachos();
+    loadClientes();
+}
+
+function showMessage(message, type) {
+    const toast = document.createElement('div');
+    toast.className = `fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg transition-all duration-300 ${
+        type === 'success' ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
+    }`;
+    toast.innerHTML = `
+        <div class="flex items-center space-x-2">
+            <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'}"></i>
+            <span>${message}</span>
+        </div>
+    `;
+    
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.remove();
+    }, 3000);
+}
+
+// Inicializar Select2 para el select de clientes
+$(document).ready(function() {
+    $('#cliente-select').select2({
+        placeholder: 'Seleccionar cliente...',
+        allowClear: true,
+        width: '100%',
+        language: {
+            noResults: function() {
+                return "No se encontraron clientes";
+            },
+            searching: function() {
+                return "Buscando...";
+            }
+        },
+        templateResult: function(data) {
+            if (!data.id) return data.text;
+            return $(`<span><i class="fas fa-user mr-2 text-green-500"></i>${data.text}</span>`);
+        },
+        templateSelection: function(data) {
+            if (!data.id) return data.text;
+            return $(`<span><i class="fas fa-user mr-2 text-green-500"></i>${data.text}</span>`);
+        }
+    });
+});
+</script>
+
+<!-- Select2 CSS y JS -->
+<link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+<script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+
+<style>
+/* Estilos personalizados para Select2 */
+.select2-container--default .select2-selection--single {
+    height: 48px;
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    background: #fafafa;
+    transition: all 0.3s ease;
+}
+
+.select2-container--default .select2-selection--single:focus,
+.select2-container--default.select2-container--open .select2-selection--single {
+    border-color: #0891b2;
+    background: white;
+    box-shadow: 0 0 0 3px rgba(8, 145, 178, 0.1);
+}
+
+.select2-container--default .select2-selection--single .select2-selection__rendered {
+    line-height: 44px;
+    padding-left: 16px;
+    color: #374151;
+}
+
+.select2-container--default .select2-selection--single .select2-selection__arrow {
+    height: 46px;
+    right: 16px;
+}
+
+.select2-dropdown {
+    border: 2px solid #0891b2;
+    border-radius: 12px;
+    box-shadow: 0 4px 20px rgba(8, 145, 178, 0.15);
+}
+
+.select2-container--default .select2-search--dropdown .select2-search__field {
+    border: 2px solid #e5e7eb;
+    border-radius: 8px;
+    padding: 8px 12px;
+}
+
+.select2-container--default .select2-search--dropdown .select2-search__field:focus {
+    border-color: #0891b2;
+    outline: none;
+    box-shadow: 0 0 0 3px rgba(8, 145, 178, 0.1);
+}
+
+.select2-container--default .select2-results__option--highlighted[aria-selected] {
+    background-color: #0891b2;
+}
+
+.select2-results__option {
+    padding: 8px 16px;
+    font-size: 14px;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+    .select2-container--default .select2-selection--single {
+        height: 44px;
+    }
+    
+    .select2-container--default .select2-selection--single .select2-selection__rendered {
+        line-height: 40px;
+        font-size: 14px;
+    }
+    
+    .select2-container--default .select2-selection--single .select2-selection__arrow {
+        height: 42px;
+    }
+}
+</style>
+{% endblock %}

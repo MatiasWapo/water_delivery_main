@@ -1,0 +1,181 @@
+{% extends 'base.html' %}
+
+{% block title %}Dashboard - Water Delivery{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gradient-to-br from-blue-50 to-white">
+    <!-- Header con información de la empresa -->
+    <div class="bg-gradient-to-r from-blue-600 to-blue-800 text-white p-6">
+        <div class="max-w-7xl mx-auto">
+            <div class="flex items-center justify-between">
+                <!-- Logo y nombre de la empresa -->
+                <div class="flex items-center space-x-4">
+                    <div class="w-16 h-16 bg-white rounded-full flex items-center justify-center">
+                        <div class="text-blue-600 text-2xl">💧</div>
+                    </div>
+                    <div>
+                        <h1 class="text-2xl font-bold">INVERSIONES RAMIREZ C.A.</h1>
+                        <p class="text-blue-100">RIF: J-29535312-0</p>
+                    </div>
+                </div>
+                
+                <!-- KPIs principales -->
+                <div class="bg-blue-500 bg-opacity-30 rounded-lg p-4">
+                    <div class="flex space-x-6">
+                        <div class="flex items-center space-x-2">
+                            <span class="text-2xl">🚛</span>
+                            <div>
+                                <p class="text-sm text-blue-100">{{ despachos_pendientes }} despachos hoy</p>
+                            </div>
+                        </div>
+                        <div class="w-px bg-blue-400"></div>
+                        <div class="flex items-center space-x-2">
+                            <span class="text-2xl">💧</span>
+                            <div>
+                                <p class="text-sm text-blue-100">0 botellones</p>
+                            </div>
+                        </div>
+                        <div class="w-px bg-blue-400"></div>
+                        <div class="flex items-center space-x-2">
+                            <span class="text-2xl">👥</span>
+                            <div>
+                                <p class="text-sm text-blue-100">{{ total_clientes }} clientes activos</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Soporte y estado -->
+                <div class="flex items-center space-x-4">
+                    <button class="bg-blue-500 hover:bg-blue-600 px-4 py-2 rounded-lg flex items-center space-x-2 transition-colors">
+                        <span>📧</span>
+                        <span>Soporte</span>
+                    </button>
+                    <div class="text-right">
+                        <p class="text-sm">{{ fecha_actual }}</p>
+                        <div class="flex items-center space-x-2 mt-1">
+                            <div class="w-2 h-2 bg-green-400 rounded-full"></div>
+                            <span class="text-sm">Sistema Activo</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Contenido principal -->
+    <div class="max-w-7xl mx-auto p-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+            <!-- Tarjeta de Resumen -->
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-800">Resumen General</h3>
+                    <span class="text-3xl">📊</span>
+                </div>
+                <div class="space-y-3">
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Clientes Activos:</span>
+                        <span class="font-semibold">{{ total_clientes }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Deuda Total:</span>
+                        <span class="font-semibold text-red-600">${{ total_deuda|floatformat:2 }}</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-gray-600">Despachos Pendientes:</span>
+                        <span class="font-semibold text-orange-600">{{ despachos_pendientes }}</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tarjeta de Acciones Rápidas -->
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-800">Acciones Rápidas</h3>
+                    <span class="text-3xl">⚡</span>
+                </div>
+                <div class="space-y-3">
+                    <a href="{% url 'clientes:nuevo_cliente' %}" class="block w-full bg-blue-600 hover:bg-blue-700 text-white text-center py-2 px-4 rounded-lg transition-colors">
+                        ➕ Nuevo Cliente
+                    </a>
+                    <a href="{% url 'clientes:nuevo_despacho' %}" class="block w-full bg-green-600 hover:bg-green-700 text-white text-center py-2 px-4 rounded-lg transition-colors">
+                        🚛 Nuevo Despacho
+                    </a>
+                    <a href="{% url 'clientes:lista_clientes' %}" class="block w-full bg-gray-600 hover:bg-gray-700 text-white text-center py-2 px-4 rounded-lg transition-colors">
+                        👥 Ver Clientes
+                    </a>
+                </div>
+            </div>
+
+            <!-- Tarjeta de Estado del Sistema -->
+            <div class="bg-white rounded-lg shadow-lg p-6">
+                <div class="flex items-center justify-between mb-4">
+                    <h3 class="text-lg font-semibold text-gray-800">Estado del Sistema</h3>
+                    <span class="text-3xl">🔧</span>
+                </div>
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between">
+                        <span class="text-gray-600">Servidor:</span>
+                        <span class="flex items-center">
+                            <div class="w-2 h-2 bg-green-400 rounded-full mr-2"></div>
+                            <span class="text-green-600 font-semibold">Activo</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-gray-600">Base de Datos:</span>
+                        <span class="flex items-center">
+                            <div class="w-2 h-2 bg-green-400 rounded-full mr-2"></div>
+                            <span class="text-green-600 font-semibold">Conectada</span>
+                        </div>
+                    </div>
+                    <div class="flex items-center justify-between">
+                        <span class="text-gray-600">GPS Tracking:</span>
+                        <span class="flex items-center">
+                            <div class="w-2 h-2 bg-blue-400 rounded-full mr-2"></div>
+                            <span class="text-blue-600 font-semibold">Disponible</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sección de Acceso Rápido -->
+        <div class="mt-8">
+            <h2 class="text-2xl font-bold text-gray-800 mb-6">Acceso Rápido</h2>
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                <a href="{% url 'clientes:lista_clientes' %}" class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
+                    <div class="text-center">
+                        <div class="text-4xl mb-3">👥</div>
+                        <h3 class="font-semibold text-gray-800">Clientes</h3>
+                        <p class="text-sm text-gray-600">Gestionar clientes</p>
+                    </div>
+                </a>
+                
+                <a href="{% url 'clientes:nuevo_despacho' %}" class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
+                    <div class="text-center">
+                        <div class="text-4xl mb-3">🚛</div>
+                        <h3 class="font-semibold text-gray-800">Despachos</h3>
+                        <p class="text-sm text-gray-600">Crear despachos</p>
+                    </div>
+                </a>
+                
+                <a href="{% url 'clientes:historial_despachos' %}" class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
+                    <div class="text-center">
+                        <div class="text-4xl mb-3">📋</div>
+                        <h3 class="font-semibold text-gray-800">Historial</h3>
+                        <p class="text-sm text-gray-600">Ver historial</p>
+                    </div>
+                </a>
+                
+                <a href="{% url 'clientes:ruta_camion' %}" class="bg-white rounded-lg shadow-md p-6 hover:shadow-lg transition-shadow">
+                    <div class="text-center">
+                        <div class="text-4xl mb-3">🗺️</div>
+                        <h3 class="font-semibold text-gray-800">Ruta</h3>
+                        <p class="text-sm text-gray-600">Seguimiento GPS</p>
+                    </div>
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %} 

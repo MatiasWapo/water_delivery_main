@@ -1,0 +1,14 @@
+{% if messages %}
+<div class="container mt-2">
+    {% for message in messages %}
+    <div class="flex items-center p-4 mb-4 text-sm rounded-lg shadow-md
+        {% if message.tags == 'error' %}bg-agua-blue text-white border-l-4 border-agua-dark{% elif message.tags == 'success' %}bg-green-100 text-green-800 border-l-4 border-green-500{% else %}bg-white text-agua-dark border-l-4 border-agua-blue{% endif %}">
+        <i class="fas fa-exclamation-circle mr-3 text-lg"></i>
+        <span class="flex-1">{{ message }}</span>
+        <button type="button" class="ml-4 text-white hover:text-agua-light focus:outline-none" onclick="this.parentElement.style.display='none';">
+            <i class="fas fa-times"></i>
+        </button>
+    </div>
+    {% endfor %}
+</div>
+{% endif %}

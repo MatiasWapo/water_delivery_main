@@ -1,0 +1,154 @@
+{% load static %}
+<header class="bg-gradient-to-r from-cyan-500 to-blue-400 shadow-lg">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-2">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-2 md:gap-0">
+            <div class="flex items-center gap-4 min-w-0">
+                <div class="bg-white p-1 rounded-full shadow-md flex items-center justify-center overflow-hidden border-4 border-white" style="width: 70px; height: 70px;">
+                    <img src="{% static 'img/logo empresa.jpeg' %}"
+                         alt="Logo Inversiones Ramírez"
+                         class="w-14 h-14 object-contain rounded-full bg-white"
+                         style="box-shadow: 0 2px 8px rgba(8,145,178,0.10);">
+                </div>
+                <div class="text-white flex flex-col justify-center">
+                    <h1 class="text-xl md:text-2xl font-bold uppercase leading-tight">INVERSIONES RAMIREZ C.A.</h1>
+                    <p class="text-xs md:text-sm text-blue-100">RIF: J-29535312-0</p>
+                </div>
+            </div>
+            {% if user.is_authenticated %}
+              <div class="flex-1 flex justify-center items-center">
+                <div id="resumen-dia-header" class="bg-white bg-opacity-80 rounded-xl shadow px-4 py-2 flex flex-col sm:flex-row items-center gap-2 sm:gap-4 border border-agua-blue">
+                  <span class="flex items-center gap-1 text-agua-dark font-semibold text-xs sm:text-sm">
+                    <i class="fas fa-truck text-agua-blue"></i>
+                    <span id="header-total-despachos">-</span> despachos hoy
+                  </span>
+                  <span class="hidden sm:block text-gray-300">|</span>
+                  <span class="flex items-center gap-1 text-agua-dark font-semibold text-xs sm:text-sm">
+                    <i class="fas fa-tint text-agua-blue"></i>
+                    <span id="header-total-botellones">-</span> botellones
+                  </span>
+                  <span class="hidden sm:block text-gray-300">|</span>
+                  <span class="flex items-center gap-1 text-agua-dark font-semibold text-xs sm:text-sm">
+                    <i class="fas fa-users text-agua-blue"></i>
+                    <span id="header-total-clientes">-</span> clientes activos
+                  </span>
+                </div>
+              </div>
+            {% endif %}
+            <div class="flex flex-col md:items-end gap-2 order-2 md:order-3 min-w-fit">
+                <div class="flex flex-row md:flex-col items-center md:items-end gap-2 md:gap-1">
+                    <div class="flex items-center gap-2">
+                        <a href="#" onclick="showSoporteModal(event)" class="flex items-center gap-1 px-3 py-1 rounded bg-agua-light hover:bg-agua-blue text-agua-dark hover:text-white font-semibold shadow transition text-xs">
+                            <i class="fas fa-envelope"></i> Soporte
+                        </a>
+                        <div class="flex items-center gap-2 text-sm text-white font-semibold">
+                            <i class="fas fa-clock"></i>
+                            <span id="header-fecha-hora">Cargando fecha y hora...</span>
+                        </div>
+                    </div>
+                    <span class="inline-block mt-0 md:mt-1">
+                        <span class="px-3 py-1 rounded bg-green-500 text-white font-semibold text-xs shadow">● Sistema Activo</span>
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="h-1 bg-gradient-to-r from-blue-400 via-cyan-300 to-blue-500"></div>
+</header>
+
+<div id="soporte-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 hidden">
+  <div class="bg-white rounded-lg shadow-lg p-6 w-11/12 max-w-sm">
+    <div class="flex items-center mb-4">
+      <div class="bg-agua-blue text-white rounded-full p-2 mr-3">
+        <i class="fas fa-envelope text-xl"></i>
+      </div>
+      <h3 class="text-lg font-bold text-agua-dark">Soporte Técnico</h3>
+    </div>
+    <p class="text-gray-700 mb-4">¿Necesitas ayuda? Puedes escribirnos a:</p>
+    <div class="flex items-center gap-2 mb-6">
+      <span id="correo-soporte" class="font-semibold text-agua-blue select-all">matiasmartimez15@gmail.com</span>
+      <button onclick="copiarCorreoSoporte()" class="px-2 py-1 rounded bg-agua-blue text-white hover:bg-agua-dark text-xs font-semibold transition">Copiar</button>
+    </div>
+    <div class="flex justify-end gap-2">
+      <a href="https://mail.google.com/mail/?view=cm&fs=1&to=matiasmartimez15@gmail.com" target="_blank" rel="noopener" class="px-4 py-2 rounded bg-agua-blue text-white hover:bg-agua-dark font-semibold transition">Abrir Gmail</a>
+      <button onclick="cerrarSoporteModal()" class="px-4 py-2 rounded bg-gray-200 text-gray-700 hover:bg-gray-300">Cerrar</button>
+    </div>
+  </div>
+</div>
+
+<div id="toast-copiado" class="fixed top-4 right-4 z-50 p-4 rounded-lg shadow-lg bg-agua-blue text-white font-semibold flex items-center gap-2 hidden">
+    <i class="fas fa-check-circle"></i>
+    <span>¡Correo copiado al portapapeles!</span>
+</div>
+
+<style>
+    .header-logo-container:hover img {
+        transform: scale(1.05);
+        transition: transform 0.2s ease-in-out;
+    }
+    
+    .water-wave {
+        background: linear-gradient(45deg, transparent 30%, rgba(255,255,255,0.1) 50%, transparent 70%);
+        animation: wave 3s infinite;
+    }
+    
+    @keyframes wave {
+        0% { transform: translateX(-100%); }
+        100% { transform: translateX(100%); }
+    }
+    
+    @media (max-width: 640px) {
+        .header-info {
+            display: none;
+        }
+    }
+</style>
+<script>
+function updateHeaderDateTime() {
+    const now = new Date();
+    const fecha = now.toLocaleDateString('es-ES', { day: '2-digit', month: '2-digit', year: 'numeric' });
+    const hora = now.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+    document.getElementById('header-fecha-hora').textContent = `${fecha} ${hora}`;
+}
+setInterval(updateHeaderDateTime, 1000);
+updateHeaderDateTime();
+
+function showSoporteModal(e) {
+    e.preventDefault();
+    document.getElementById('soporte-modal').classList.remove('hidden');
+}
+function cerrarSoporteModal() {
+    document.getElementById('soporte-modal').classList.add('hidden');
+}
+function copiarCorreoSoporte() {
+    const correo = document.getElementById('correo-soporte').textContent;
+    navigator.clipboard.writeText(correo);
+    mostrarToastCopiado();
+}
+function mostrarToastCopiado() {
+    const toast = document.getElementById('toast-copiado');
+    toast.classList.remove('hidden');
+    setTimeout(() => {
+        toast.classList.add('hidden');
+    }, 2000);
+}
+
+async function cargarResumenDiaHeader() {
+    try {
+        const clientesResp = await fetch("/clientes/api/clientes/");
+        const clientesData = await clientesResp.json();
+        document.getElementById('header-total-clientes').textContent = clientesData.clientes.length;
+        const despachosResp = await fetch("/clientes/api/despachos-hoy/");
+        const despachosData = await despachosResp.json();
+        document.getElementById('header-total-despachos').textContent = despachosData.despachos.length;
+        let totalBotellones = 0;
+        despachosData.despachos.forEach(d => { totalBotellones += d.cantidad; });
+        document.getElementById('header-total-botellones').textContent = totalBotellones;
+    } catch (e) {
+        document.getElementById('header-total-despachos').textContent = '-';
+        document.getElementById('header-total-botellones').textContent = '-';
+        document.getElementById('header-total-clientes').textContent = '-';
+    }
+}
+document.addEventListener('DOMContentLoaded', cargarResumenDiaHeader);
+</script>

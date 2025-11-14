@@ -1,0 +1,32 @@
+# =============================================
+# DEPENDENCIAS DEL PROYECTO WATER DELIVERY
+# =============================================
+# Este archivo contiene todas las dependencias necesarias para el proyecto
+# Instalar con: pip install -r requirements.txt
+
+# Django y componentes principales
+Django==4.2.7
+django-crispy-forms==2.1
+crispy-bootstrap5==0.7
+django-widget-tweaks==1.5.0
+
+# Configuración de entorno
+python-decouple==3.8
+
+# Servidor de archivos estáticos
+whitenoise==6.6.0
+
+# Base de datos PostgreSQL (para producción)
+psycopg2-binary==2.9.9
+
+# Servidor WSGI para producción
+gunicorn==21.2.0
+
+# Variables de entorno
+dj-database-url==2.1.0
+
+# Herramientas de desarrollo (opcional)
+django-debug-toolbar==4.2.0
+
+# Seguridad adicional
+django-cors-headers==4.3.1 

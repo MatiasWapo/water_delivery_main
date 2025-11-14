@@ -1,0 +1,864 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load tz %}
+
+{% block title %}Historial de {{ cliente.nombre }} {{ cliente.apellido }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-4 sm:py-6">
+    <div class="max-w-7xl mx-auto px-2 sm:px-4 md:px-6 lg:px-8">
+        {# Header del cliente: avatar, nombre, estado y acciones principales #}
+        <div class="bg-gradient-agua rounded-xl shadow-lg p-4 sm:p-6 mb-4 sm:mb-6">
+            <div class="flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
+                <div class="flex items-center gap-4">
+                    <div class="client-avatar-large flex items-center justify-center">
+                        <span>{{ cliente.nombre|first }}{{ cliente.apellido|first }}</span>
+                    </div>
+                    <div>
+                        <h2 class="mb-1 font-bold text-white text-lg sm:text-2xl">{{ cliente.nombre }} {{ cliente.apellido }}</h2>
+                        <p class="mb-0 text-white-75 text-xs sm:text-base">
+                            <i class="fas fa-id-card me-2"></i>
+                            Cliente #{{ cliente.id|stringformat:"04d" }}
+                            {% if not cliente.activo %}
+                                <span class="badge bg-warning ms-2">INACTIVO</span>
+                            {% endif %}
+                        </p>
+                    </div>
+                </div>
+                <div class="flex gap-2 mt-4 md:mt-0">
+                    <a href="{% url 'clientes:editar_cliente' cliente.pk %}" class="px-4 py-2 rounded bg-white text-agua-dark font-semibold shadow hover:bg-agua-light transition flex items-center text-sm sm:text-base">
+                        <i class="fas fa-edit me-1"></i> Editar
+                    </a>
+                    <a href="{% url 'clientes:lista_clientes' %}" class="px-4 py-2 rounded bg-agua-blue text-white font-semibold shadow hover:bg-agua-dark transition flex items-center text-sm sm:text-base">
+                        <i class="fas fa-arrow-left me-1"></i> Volver
+                    </a>
+                </div>
+            </div>
+        </div>
+        {# Información y estadísticas del cliente: teléfono, estado, dirección, totales #}
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+            <div class="md:col-span-2">
+                <div class="bg-white rounded-xl shadow-sm p-4 mb-4">
+                    <h5 class="mb-4 text-agua-dark font-bold flex items-center text-base sm:text-lg">
+                        <i class="fas fa-info-circle me-2"></i> Información del Cliente
+                    </h5>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <div class="mb-3">
+                                <span class="block text-xs font-semibold text-gray-500 uppercase mb-1">Teléfono:</span>
+                                {% if cliente.telefono %}
+                                    <a href="tel:{{ cliente.telefono }}" class="contact-link text-agua-blue font-medium">
+                                        <i class="fas fa-phone-alt me-2"></i>{{ cliente.telefono }}
+                                    </a>
+                                {% else %}
+                                    <span class="text-gray-400">No registrado</span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div>
+                            <div class="mb-3">
+                                <span class="block text-xs font-semibold text-gray-500 uppercase mb-1">Estado:</span>
+                                {% if cliente.activo %}
+                                    <span class="inline-block bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-bold">
+                                        <i class="fas fa-check-circle me-1"></i> Activo
+                                    </span>
+                                {% else %}
+                                    <span class="inline-block bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs font-bold">
+                                        <i class="fas fa-pause-circle me-1"></i> Inactivo
+                                    </span>
+                                {% endif %}
+                            </div>
+                        </div>
+                        <div class="sm:col-span-2">
+                            <div>
+                                <span class="block text-xs font-semibold text-gray-500 uppercase mb-1">Dirección:</span>
+                                <span class="text-gray-700 flex items-center"><i class="fas fa-map-marker-alt me-2 text-agua-blue"></i>{{ cliente.direccion }}</span>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="mb-3">
+                                <span class="block text-xs font-semibold text-gray-500 uppercase mb-1">Precio Botellón:</span>
+                                <span class="text-green-600 font-semibold flex items-center">
+                                    <i class="fas fa-dollar-sign me-2 text-green-500"></i>
+                                    ${{ cliente.precio_botellon|floatformat:2 }}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Estadísticas -->
+            <div>
+                <div class="bg-white rounded-xl shadow-lg p-4 h-full flex flex-col justify-between border border-agua-light/50">
+                    <h5 class="mb-4 text-agua-dark font-bold flex items-center text-base sm:text-lg">
+                        <i class="fas fa-chart-bar me-2"></i> Estadísticas
+                    </h5>
+                    <div class="grid grid-cols-2 gap-2 mb-2">
+                        <div class="stat-item text-center bg-blue-50 rounded-lg p-2 shadow-sm">
+                            <div class="stat-number text-agua-blue font-bold text-lg">{{ total_despachos }}</div>
+                            <div class="stat-label text-xs text-agua-dark">Total Pedidos</div>
+                        </div>
+                        <div class="stat-item text-center bg-green-50 rounded-lg p-2 shadow-sm">
+                            <div class="stat-number text-green-600 font-bold text-lg">{{ despachos_entregados }}</div>
+                            <div class="stat-label text-xs text-green-700">Entregados</div>
+                        </div>
+                        <div class="stat-item text-center bg-yellow-50 rounded-lg p-2 shadow-sm">
+                            <div class="stat-number text-yellow-600 font-bold text-lg">{{ despachos_pendientes }}</div>
+                            <div class="stat-label text-xs text-yellow-700">Pendientes</div>
+                        </div>
+                        <div class="stat-item text-center bg-cyan-50 rounded-lg p-2 shadow-sm">
+                            <div class="stat-number text-agua-blue font-bold text-lg">{{ total_botellones }}</div>
+                            <div class="stat-label text-xs text-agua-dark">Total Botellones</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        {# Estado de deuda: muestra advertencia si el cliente debe botellones #}
+        {% if cliente.debe_total > 0 %}
+        <div class="bg-yellow-50 border-l-4 border-yellow-400 rounded-xl shadow-sm p-4 mb-4 flex items-center gap-4">
+            <div class="bg-yellow-400 text-white rounded-full p-2">
+                <i class="fas fa-exclamation-triangle"></i>
+            </div>
+            <div>
+                <h5 class="mb-1 font-bold text-yellow-800">Deuda Pendiente</h5>
+                <p class="mb-0 text-yellow-700">Este cliente debe <strong>{{ cliente.debe_total }} botellones</strong></p>
+            </div>
+        </div>
+        {% endif %}
+        {# Historial de despachos: tabla y tarjetas para móvil, con acciones de entregar, eliminar, marcar pendiente #}
+        <div class="bg-white rounded-xl shadow-sm p-4">
+            <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between mb-4 gap-2">
+                <h5 class="mb-0 text-agua-dark font-bold flex items-center text-base sm:text-lg">
+                    <i class="fas fa-history me-2"></i> Historial de Despachos
+                </h5>
+                <span class="badge bg-agua-light text-agua-dark px-3 py-2 text-xs sm:text-sm">
+                    {{ despachos.count }} registro{{ despachos.count|pluralize }}
+                </span>
+            </div>
+            {% if despachos %}
+            <div class="hidden sm:block table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-header">
+                        <tr>
+                            <th class="ps-4 py-3">Fecha</th>
+                            <th class="py-3">Cantidad</th>
+                            <th class="py-3">Estado</th>
+                            <th class="py-3">Notas</th>
+                            <th class="text-center py-3">Acciones</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for despacho in despachos %}
+                        <tr class="{% if not despacho.entregado %}table-warning{% endif %}">
+                            <td class="ps-4 py-3">
+                                <div class="date-info">
+                                    <div class="fw-semibold">{{ despacho.fecha|date:"d/m/Y" }}</div>
+                                    <small class="text-muted">{{ despacho.fecha|localtime|date:"H:i" }}</small>
+                                </div>
+                            </td>
+                            <td class="py-3">
+                                <span class="quantity-badge">
+                                    <i class="fas fa-bottle-water me-1"></i>
+                                    {{ despacho.cantidad_botellones }}
+                                </span>
+                            </td>
+                            <td class="py-3">
+                                {% if despacho.entregado %}
+                                    <span class="status-badge success-badge">
+                                        <i class="fas fa-check-circle me-1"></i>
+                                        Entregado
+                                    </span>
+                                {% else %}
+                                    <span class="status-badge pending-badge">
+                                        <i class="fas fa-clock me-1"></i>
+                                        Pendiente
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td class="py-3">
+                                <span class="notes-text">
+                                    {{ despacho.notas|default:"-" }}
+                                </span>
+                            </td>
+                            <td class="text-center py-3">
+                                {% if not despacho.entregado %}
+                                    <a href="{% url 'clientes:marcar_entregado' despacho.pk %}"
+                                       class="btn btn-success btn-sm"
+                                       onclick="showConfirmEntregar('{% url 'clientes:marcar_entregado' despacho.pk %}', event)"
+                                       data-bs-toggle="tooltip"
+                                       title="Marcar como entregado">
+                                        <i class="fas fa-check me-1"></i>
+                                        Entregar
+                                    </a>
+                                    <a href="{% url 'clientes:eliminar_despacho' despacho.pk %}"
+                                       class="btn btn-danger btn-sm ml-2"
+                                       onclick="showConfirmEliminarDespacho('{% url 'clientes:eliminar_despacho' despacho.pk %}', event)"
+                                       data-bs-toggle="tooltip"
+                                       title="Eliminar despacho">
+                                        <i class="fas fa-trash me-1"></i>
+                                        Eliminar
+                                    </a>
+                                {% else %}
+                                    <a href="{% url 'clientes:marcar_pendiente' despacho.pk %}"
+                                       class="btn btn-warning btn-sm"
+                                       onclick="showConfirmPendiente('{% url 'clientes:marcar_pendiente' despacho.pk %}', event)"
+                                       data-bs-toggle="tooltip"
+                                       title="Marcar como pendiente">
+                                        <i class="fas fa-undo me-1"></i>
+                                        Pendiente
+                                    </a>
+                                    <a href="{% url 'clientes:eliminar_despacho' despacho.pk %}"
+                                       class="btn btn-danger btn-sm ml-2"
+                                       onclick="showConfirmEliminarDespacho('{% url 'clientes:eliminar_despacho' despacho.pk %}', event)"
+                                       data-bs-toggle="tooltip"
+                                       title="Eliminar despacho">
+                                        <i class="fas fa-trash me-1"></i>
+                                        Eliminar
+                                    </a>
+                                {% endif %}
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+            <!-- Tarjetas en móvil -->
+            <div class="sm:hidden space-y-3">
+                {% for despacho in despachos %}
+                <div class="rounded-lg border border-gray-200 p-3 shadow-sm bg-gray-50">
+                    <div class="flex justify-between items-center mb-2">
+                        <div>
+                            <div class="font-semibold text-gray-900">{{ despacho.fecha|date:"d/m/Y" }}</div>
+                            <div class="text-xs text-gray-500">{{ despacho.fecha|localtime|date:"H:i" }}</div>
+                        </div>
+                        <span class="quantity-badge">
+                            <i class="fas fa-bottle-water me-1"></i>
+                            {{ despacho.cantidad_botellones }}
+                        </span>
+                    </div>
+                    <div class="flex items-center gap-2 mb-1">
+                        {% if despacho.entregado %}
+                            <span class="status-badge success-badge text-xs">
+                                <i class="fas fa-check-circle me-1"></i> Entregado
+                            </span>
+                        {% else %}
+                            <span class="status-badge pending-badge text-xs">
+                                <i class="fas fa-clock me-1"></i> Pendiente
+                            </span>
+                        {% endif %}
+                    </div>
+                    <div class="notes-text mb-2">
+                        {{ despacho.notas|default:"-" }}
+                    </div>
+                    <div class="flex justify-end">
+                        {% if not despacho.entregado %}
+                            <a href="{% url 'clientes:marcar_entregado' despacho.pk %}"
+                               class="px-3 py-1 rounded bg-green-500 text-white text-xs font-semibold shadow hover:bg-green-600 transition flex items-center"
+                               onclick="showConfirmEntregar('{% url 'clientes:marcar_entregado' despacho.pk %}', event)"
+                               data-bs-toggle="tooltip"
+                               title="Marcar como entregado">
+                                <i class="fas fa-check me-1"></i> Entregar
+                            </a>
+                            <a href="{% url 'clientes:eliminar_despacho' despacho.pk %}"
+                               class="px-3 py-1 rounded bg-red-500 text-white text-xs font-semibold shadow hover:bg-red-600 transition flex items-center ml-2"
+                               onclick="showConfirmEliminarDespacho('{% url 'clientes:eliminar_despacho' despacho.pk %}', event)"
+                               data-bs-toggle="tooltip"
+                               title="Eliminar despacho">
+                                <i class="fas fa-trash me-1"></i> Eliminar
+                            </a>
+                        {% else %}
+                            <a href="{% url 'clientes:marcar_pendiente' despacho.pk %}"
+                               class="px-3 py-1 rounded bg-yellow-500 text-white text-xs font-semibold shadow hover:bg-yellow-600 transition flex items-center"
+                               onclick="showConfirmPendiente('{% url 'clientes:marcar_pendiente' despacho.pk %}', event)"
+                               data-bs-toggle="tooltip"
+                               title="Marcar como pendiente">
+                                <i class="fas fa-undo me-1"></i> Pendiente
+                            </a>
+                            <a href="{% url 'clientes:eliminar_despacho' despacho.pk %}"
+                               class="px-3 py-1 rounded bg-red-500 text-white text-xs font-semibold shadow hover:bg-red-600 transition flex items-center ml-2"
+                               onclick="showConfirmEliminarDespacho('{% url 'clientes:eliminar_despacho' despacho.pk %}', event)"
+                               data-bs-toggle="tooltip"
+                               title="Eliminar despacho">
+                                <i class="fas fa-trash me-1"></i> Eliminar
+                            </a>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+            {% else %}
+            <div class="empty-state text-center pt-16 pb-5 mt-8">
+                <div class="empty-icon mb-4">
+                    <i class="fas fa-inbox"></i>
+                </div>
+                <h5 class="text-muted mb-3">Sin historial de despachos</h5>
+                <p class="text-muted">Este cliente aún no tiene registros de pedidos.</p>
+                <div class="flex justify-center mt-8">
+                    <a href="{% url 'clientes:nuevo_despacho' %}" class="btn btn-agua-blue">
+                        <i class="fas fa-plus me-1"></i>
+                        Crear Primer Despacho
+                    </a>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+        {# Historial de pagos: tabla de pagos realizados por el cliente #}
+        <div class="mt-8">
+            <h3 class="text-lg font-bold text-agua-dark mb-2">Historial de Pagos</h3>
+            <table class="w-full text-sm bg-white rounded shadow">
+                <thead>
+                    <tr>
+                        <th class="py-2 text-center">Fecha</th>
+                        <th class="py-2 text-center">Monto</th>
+                        <th class="py-2 text-center">Observaciones</th>
+                        {% if request.user.is_authenticated and request.user.tipo_usuario == 'empresa' %}
+                        <th class="py-2 text-center">Acciones</th>
+                        {% endif %}
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for pago in cliente.pagos.all %}
+                    <tr>
+                        <td class="py-2 text-center">{{ pago.fecha|date:"d/m/Y H:i" }}</td>
+                        <td class="py-2 text-center">${{ pago.monto|floatformat:2 }}</td>
+                        <td class="py-2 text-center">{{ pago.observaciones|default:"-" }}</td>
+                        {% if request.user.is_authenticated and request.user.tipo_usuario == 'empresa' %}
+                        <td class="py-2 text-center">
+                            <div class="flex justify-center gap-2">
+                                <button type="button"
+                                        class="px-3 py-1 bg-agua-blue text-white text-xs font-semibold rounded shadow hover:bg-agua-dark transition"
+                                        data-edit-url="{% url 'clientes:editar_pago' pago.id %}"
+                                        data-monto="{{ pago.monto|floatformat:2 }}"
+                                        data-observaciones="{{ pago.observaciones|default_if_none:''|escape }}"
+                                        onclick="showEditarPagoModal(this)">
+                                    <i class="fas fa-edit me-1"></i> Editar
+                                </button>
+                                <button type="button"
+                                        class="px-3 py-1 bg-red-500 text-white text-xs font-semibold rounded shadow hover:bg-red-600 transition"
+                                        data-delete-url="{% url 'clientes:eliminar_pago' pago.id %}"
+                                        onclick="showEliminarPagoModal(this)">
+                                    <i class="fas fa-trash me-1"></i> Eliminar
+                                </button>
+                            </div>
+                        </td>
+                        {% endif %}
+                    </tr>
+                    {% empty %}
+                    <tr><td colspan="{% if request.user.is_authenticated and request.user.tipo_usuario == 'empresa' %}4{% else %}3{% endif %}" class="text-center text-gray-400 py-4">Sin pagos registrados</td></tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        {# Franja de deuda/saldo actual: muestra el estado financiero del cliente #}
+        {% if cliente.saldo > 0 %}
+            <div class="my-6 p-4 rounded-lg shadow bg-red-50 flex items-center gap-3" style="border-left: 6px solid #dc2626;">
+                <i class="fas fa-exclamation-circle text-red-600 text-2xl"></i>
+                <div>
+                    <span class="font-semibold text-red-700">Deuda actual del cliente:</span>
+                    <span class="text-lg text-red-700 font-bold">${{ cliente.saldo|floatformat:2 }}</span>
+                </div>
+            </div>
+        {% elif cliente.saldo < 0 %}
+            <div class="my-6 p-4 rounded-lg shadow bg-green-50 flex items-center gap-3" style="border-left: 6px solid #16a34a;">
+                <i class="fas fa-check-circle text-green-600 text-2xl"></i>
+                <div>
+                    <span class="font-semibold text-green-700">Saldo a favor del cliente:</span>
+                    <span class="text-lg text-green-700 font-bold">${{ cliente.saldo|floatformat:2|slice:"1:" }}</span>
+                </div>
+            </div>
+        {% else %}
+            <div class="my-6 p-4 rounded-lg shadow bg-gray-50 flex items-center gap-3" style="border-left: 6px solid #64748b;">
+                <i class="fas fa-info-circle text-gray-500 text-2xl"></i>
+                <div>
+                    <span class="font-semibold text-gray-700">El cliente está al día.</span>
+                </div>
+            </div>
+        {% endif %}
+        {# Formulario de abono: solo visible para usuarios empresa #}
+        {% if request.user.is_authenticated and request.user.tipo_usuario == 'empresa' %}
+        <div class="mt-6 bg-white rounded shadow p-4">
+            <h4 class="font-bold text-agua-dark mb-2">Registrar abono</h4>
+            <form method="post" action="{% url 'clientes:registrar_pago' cliente.id %}">
+                {% csrf_token %}
+                <div class="flex flex-col sm:flex-row gap-2 items-center">
+                    <input type="number" step="0.5" min="0.5" name="monto" placeholder="Monto ($)" class="px-3 py-2 border rounded w-full sm:w-40" required pattern="^\d+(\.5)?$" title="Solo números enteros o con .5 (ej: 5, 5.5)">
+                    <input type="text" name="observaciones" placeholder="Observaciones (opcional)" class="px-3 py-2 border rounded w-full sm:w-64">
+                    <button type="submit" class="bg-agua-blue text-white px-4 py-2 rounded font-semibold hover:bg-agua-dark transition">Registrar</button>
+                </div>
+            </form>
+        </div>
+        {% endif %}
+    </div>
+</div>
+{% if request.user.is_authenticated and request.user.tipo_usuario == 'empresa' %}
+<!-- Modal para editar pago -->
+<div id="edit-payment-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 hidden">
+  <div class="bg-white rounded-lg shadow-lg p-6 w-11/12 max-w-md">
+    <div class="flex items-center mb-4">
+      <div class="bg-agua-blue text-white rounded-full p-2 mr-3">
+        <i class="fas fa-edit text-xl"></i>
+      </div>
+      <h3 class="text-lg font-bold text-agua-dark">Editar pago</h3>
+    </div>
+    <form id="edit-payment-form" method="post" class="space-y-4">
+      {% csrf_token %}
+      <div>
+        <label for="edit-payment-monto" class="block text-sm font-semibold text-gray-600 mb-1">Monto ($)</label>
+        <input id="edit-payment-monto" name="monto" type="number" step="0.5" min="0.5" required pattern="^\d+(\.5)?$"
+               title="Solo números enteros o con .5 (ej: 5, 5.5)"
+               class="w-full px-3 py-2 border rounded focus:outline-none focus:ring-2 focus:ring-agua-blue">
+      </div>
+      <div>
+        <label for="edit-payment-observaciones" class="block text-sm font-semibold text-gray-600 mb-1">Observaciones</label>
+        <textarea id="edit-payment-observaciones" name="observaciones" rows="3"
+                  class="w-full px-3 py-2 border rounded resize-none focus:outline-none focus:ring-2 focus:ring-agua-blue"
+                  placeholder="Observaciones (opcional)"></textarea>
+      </div>
+      <div class="flex justify-end gap-2">
+        <button type="button" class="px-4 py-2 rounded bg-gray-200 text-gray-700 hover:bg-gray-300" onclick="closeEditarPagoModal()">Cancelar</button>
+        <button type="submit" class="px-4 py-2 rounded bg-agua-blue text-white hover:bg-agua-dark font-semibold transition">Guardar</button>
+      </div>
+    </form>
+  </div>
+</div>
+
+<!-- Modal para eliminar pago -->
+<div id="delete-payment-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 hidden">
+  <div class="bg-white rounded-lg shadow-lg p-6 w-11/12 max-w-sm">
+    <div class="flex items-center mb-4">
+      <div class="bg-red-500 text-white rounded-full p-2 mr-3">
+        <i class="fas fa-trash-alt text-xl"></i>
+      </div>
+      <h3 class="text-lg font-bold text-red-700">Eliminar pago</h3>
+    </div>
+    <p class="text-gray-700 mb-6">¿Estás seguro de que deseas eliminar este pago? Esta acción no se puede deshacer.</p>
+    <form id="delete-payment-form" method="post" class="flex justify-end gap-2">
+      {% csrf_token %}
+      <button type="button" class="px-4 py-2 rounded bg-gray-200 text-gray-700 hover:bg-gray-300" onclick="closeEliminarPagoModal()">Cancelar</button>
+      <button type="submit" class="px-4 py-2 rounded bg-red-500 text-white hover:bg-red-700 font-semibold transition">Sí, eliminar</button>
+    </form>
+  </div>
+</div>
+{% endif %}
+{# Modales de confirmación para entregar, marcar pendiente y eliminar despacho #}
+<!-- Modal de confirmación para marcar como entregado -->
+<div id="confirm-entregar-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 hidden">
+  <div class="bg-white rounded-lg shadow-lg p-6 w-11/12 max-w-sm">
+    <div class="flex items-center mb-4">
+      <div class="bg-green-500 text-white rounded-full p-2 mr-3">
+        <i class="fas fa-check-circle text-xl"></i>
+      </div>
+      <h3 class="text-lg font-bold text-green-700">Confirmar entrega</h3>
+    </div>
+    <p class="text-gray-700 mb-6" id="confirm-entregar-message">¿Estás seguro de marcar este despacho como entregado?</p>
+    <div class="flex justify-end gap-2">
+      <button onclick="closeConfirmEntregar()" class="px-4 py-2 rounded bg-gray-200 text-gray-700 hover:bg-gray-300">Cancelar</button>
+      <button id="confirm-entregar-accept" class="px-4 py-2 rounded bg-green-500 text-white hover:bg-green-700 font-semibold transition">Sí, marcar</button>
+    </div>
+  </div>
+</div>
+<!-- Modal de confirmación para marcar como pendiente -->
+<div id="confirm-pendiente-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 hidden">
+  <div class="bg-white rounded-lg shadow-lg p-6 w-11/12 max-w-sm">
+    <div class="flex items-center mb-4">
+      <div class="bg-yellow-500 text-white rounded-full p-2 mr-3">
+        <i class="fas fa-undo text-xl"></i>
+      </div>
+      <h3 class="text-lg font-bold text-yellow-700">Confirmar cambio a pendiente</h3>
+    </div>
+    <p class="text-gray-700 mb-6">¿Estás seguro de marcar este despacho como pendiente?</p>
+    <div class="flex justify-end gap-2">
+      <button onclick="closeConfirmPendiente()" class="px-4 py-2 rounded bg-gray-200 text-gray-700 hover:bg-gray-300">Cancelar</button>
+      <button id="confirm-pendiente-accept" class="px-4 py-2 rounded bg-yellow-500 text-white hover:bg-yellow-700 font-semibold transition">Sí, marcar</button>
+    </div>
+  </div>
+</div>
+<!-- Modal de confirmación para eliminar despacho -->
+<div id="confirm-eliminar-despacho-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 hidden">
+  <div class="bg-white rounded-lg shadow-lg p-6 w-11/12 max-w-sm">
+    <div class="flex items-center mb-4">
+      <div class="bg-red-500 text-white rounded-full p-2 mr-3">
+        <i class="fas fa-trash-alt text-xl"></i>
+      </div>
+      <h3 class="text-lg font-bold text-red-700">Confirmar eliminación</h3>
+    </div>
+    <p class="text-gray-700 mb-6">¿Estás seguro de que deseas eliminar este despacho?</p>
+    <div class="flex justify-end gap-2">
+      <button onclick="closeConfirmEliminarDespacho()" class="px-4 py-2 rounded bg-gray-200 text-gray-700 hover:bg-gray-300">Cancelar</button>
+      <button id="confirm-eliminar-despacho-accept" class="px-4 py-2 rounded bg-red-500 text-white hover:bg-red-700 font-semibold transition">Sí, eliminar</button>
+    </div>
+  </div>
+</div>
+
+{# Estilos específicos para la página de detalle de cliente #}
+<style>
+:root {
+    --agua-blue: #0891b2;
+    --agua-dark: #164e63;
+    --agua-light: #a5f3fc;
+    --agua-light-bg: #ecfeff;
+    --agua-gradient: linear-gradient(135deg, #0891b2, #0e7490, #164e63);
+}
+
+.bg-gradient-agua {
+    background: var(--agua-gradient);
+}
+
+.text-white-75 {
+    color: rgba(255, 255, 255, 0.75) !important;
+}
+
+.client-avatar-large {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.2);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 28px;
+    text-transform: uppercase;
+    border: 3px solid rgba(255, 255, 255, 0.3);
+}
+
+.table-responsive table {
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow: 0 2px 12px 0 rgba(8,145,178,0.08);
+}
+.table-responsive tbody tr {
+    border-radius: 12px;
+    background: #f8fafc;
+    margin-bottom: 10px;
+    box-shadow: 0 1px 4px 0 rgba(8,145,178,0.04);
+    transition: box-shadow 0.2s, background 0.2s;
+}
+.table-responsive tbody tr:hover {
+    background: #e0f2fe;
+    box-shadow: 0 4px 16px 0 rgba(8,145,178,0.10);
+}
+.table-header {
+    background: linear-gradient(90deg, var(--agua-light-bg), #f8fafc);
+    color: var(--agua-dark);
+    font-weight: 700;
+    font-size: 14px;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+.date-info {
+    line-height: 1.2;
+}
+.quantity-badge {
+    background: var(--agua-light-bg);
+    color: var(--agua-dark);
+    padding: 8px 16px;
+    border-radius: 18px;
+    font-size: 15px;
+    font-weight: 700;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.status-badge {
+    padding: 8px 16px;
+    border-radius: 18px;
+    font-size: 13px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+.success-badge {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+}
+.pending-badge {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: white;
+}
+.notes-text {
+    font-size: 14px;
+    color: #64748b;
+    font-style: italic;
+}
+.btn, .btn-sm {
+    border-radius: 12px !important;
+    box-shadow: 0 2px 8px 0 rgba(8,145,178,0.08);
+    font-weight: 600;
+    transition: all 0.2s;
+    padding: 8px 16px;
+    font-size: 14px;
+    margin-bottom: 2px;
+}
+.btn-success {
+    background: linear-gradient(135deg, #10b981, #059669);
+    color: white;
+}
+.btn-success:hover {
+    background: linear-gradient(135deg, #059669, #10b981);
+    color: white;
+}
+.btn-warning {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: white;
+}
+.btn-warning:hover {
+    background: linear-gradient(135deg, #d97706, #f59e0b);
+    color: white;
+}
+.btn-danger {
+    background: linear-gradient(135deg, #ef4444, #b91c1c);
+    color: white;
+}
+.btn-danger:hover {
+    background: linear-gradient(135deg, #b91c1c, #ef4444);
+    color: white;
+}
+.btn-sm {
+    padding: 6px 12px;
+    font-size: 13px;
+}
+.empty-state .empty-icon {
+    width: 100px;
+    height: 100px;
+    margin: 0 auto;
+    background: var(--agua-light-bg);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 40px;
+    color: var(--agua-blue);
+}
+
+.btn-agua-blue {
+    background: var(--agua-gradient);
+    border: none;
+    color: white;
+    font-weight: 600;
+    padding: 10px 20px;
+    border-radius: 8px;
+    transition: all 0.3s ease;
+}
+
+.btn-agua-blue:hover {
+    background: linear-gradient(135deg, #0e7490, #164e63);
+    color: white;
+    transform: translateY(-1px);
+}
+
+.bg-agua-light {
+    background-color: var(--agua-light-bg);
+}
+
+.text-agua-blue { color: var(--agua-blue); }
+.text-agua-dark { color: var(--agua-dark); }
+
+/* Animación pulse para el avatar grande */
+.client-avatar-large {
+    transition: box-shadow 0.2s, transform 0.2s;
+}
+.client-avatar-large:hover {
+    animation: pulse 0.7s;
+    box-shadow: 0 8px 32px rgba(8,145,178,0.18);
+    transform: scale(1.08);
+}
+@keyframes pulse {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.07); }
+    100% { transform: scale(1); }
+}
+
+/* Hover con sombra en badges de estado */
+.badge.bg-warning, .badge.bg-agua-light {
+    transition: box-shadow 0.2s, transform 0.2s;
+}
+.badge.bg-warning:hover, .badge.bg-agua-light:hover {
+    box-shadow: 0 4px 16px rgba(245, 158, 11, 0.18);
+    transform: scale(1.05);
+}
+
+/* Badge de deuda con gradiente y borde */
+.bg-yellow-100 {
+    background: linear-gradient(135deg, #fef9c3, #fde68a) !important;
+    border: 1.5px solid #fde68a;
+}
+
+/* Zebra striping para filas de tabla */
+.table-responsive tbody tr:nth-child(even) {
+    background: #f1f5f9;
+}
+.table-responsive tbody tr:nth-child(odd) {
+    background: #f8fafc;
+}
+
+/* Tooltips personalizados */
+.tooltip-inner {
+    background: var(--agua-blue) !important;
+    color: white !important;
+    font-size: 13px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(8,145,178,0.12);
+}
+.tooltip-arrow::before {
+    border-top-color: var(--agua-blue) !important;
+}
+
+@media (max-width: 768px) {
+    .client-avatar-large {
+        width: 60px;
+        height: 60px;
+        font-size: 20px;
+    }
+    
+    .stat-number {
+        font-size: 1.5rem;
+    }
+    .table-responsive table {
+        font-size: 13px;
+    }
+    .btn, .btn-sm {
+        font-size: 12px;
+        padding: 6px 10px;
+    }
+}
+</style>
+
+{# Scripts JS: inicialización de tooltips, lógica de confirmación y acciones de los modales #}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Inicializar tooltips
+    const tooltipTriggerList = [].slice.call(document.querySelectorAll('[data-bs-toggle="tooltip"]'));
+    tooltipTriggerList.map(function (tooltipTriggerEl) {
+        return new bootstrap.Tooltip(tooltipTriggerEl);
+    });
+});
+
+let despachoAEntregar = null;
+function showConfirmEntregar(url, event) {
+    if (event) event.preventDefault();
+    despachoAEntregar = url;
+    document.getElementById('confirm-entregar-modal').classList.remove('hidden');
+    return false;
+}
+function closeConfirmEntregar() {
+    despachoAEntregar = null;
+    document.getElementById('confirm-entregar-modal').classList.add('hidden');
+}
+document.getElementById('confirm-entregar-accept').onclick = function() {
+    if (despachoAEntregar) {
+        window.location.href = despachoAEntregar;
+        closeConfirmEntregar();
+    }
+};
+
+// Reemplazar el confirm nativo en el botón de entregar
+// Busca el botón y cambia el onclick
+window.addEventListener('DOMContentLoaded', function() {
+    document.querySelectorAll('a[data-entregar-url]').forEach(function(btn) {
+        btn.onclick = function(e) {
+            e.preventDefault();
+            despachoAEntregar = btn.getAttribute('href');
+            showConfirmEntregar(despachoAEntregar);
+            return false;
+        };
+    });
+});
+
+let despachoAPendiente = null;
+function showConfirmPendiente(url, event) {
+    if (event) event.preventDefault();
+    despachoAPendiente = url;
+    document.getElementById('confirm-pendiente-modal').classList.remove('hidden');
+    return false;
+}
+function closeConfirmPendiente() {
+    despachoAPendiente = null;
+    document.getElementById('confirm-pendiente-modal').classList.add('hidden');
+}
+document.getElementById('confirm-pendiente-accept').onclick = function() {
+    if (despachoAPendiente) {
+        window.location.href = despachoAPendiente;
+        closeConfirmPendiente();
+    }
+};
+let despachoAEliminar = null;
+function showConfirmEliminarDespacho(url, event) {
+    if (event) event.preventDefault();
+    despachoAEliminar = url;
+    document.getElementById('confirm-eliminar-despacho-modal').classList.remove('hidden');
+    return false;
+}
+function closeConfirmEliminarDespacho() {
+    despachoAEliminar = null;
+    document.getElementById('confirm-eliminar-despacho-modal').classList.add('hidden');
+}
+document.getElementById('confirm-eliminar-despacho-accept').onclick = function() {
+    if (despachoAEliminar) {
+        // Enviar un formulario POST para eliminar
+        const form = document.createElement('form');
+        form.method = 'POST';
+        form.action = despachoAEliminar;
+        const csrf = document.createElement('input');
+        csrf.type = 'hidden';
+        csrf.name = 'csrfmiddlewaretoken';
+        csrf.value = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        form.appendChild(csrf);
+        document.body.appendChild(form);
+        form.submit();
+        closeConfirmEliminarDespacho();
+    }
+};
+const pagoAEditarForm = document.getElementById('edit-payment-form');
+const deletePaymentForm = document.getElementById('delete-payment-form');
+
+function showEditarPagoModal(button) {
+    if (!pagoAEditarForm || !button) {
+        return;
+    }
+    const url = button.getAttribute('data-edit-url');
+    const monto = button.getAttribute('data-monto') || '';
+    const observaciones = button.getAttribute('data-observaciones') || '';
+    pagoAEditarForm.action = url;
+    const montoInput = document.getElementById('edit-payment-monto');
+    const observacionesInput = document.getElementById('edit-payment-observaciones');
+    if (montoInput) {
+        montoInput.value = (monto || '').toString().replace(',', '.');
+    }
+    if (observacionesInput) {
+        observacionesInput.value = observaciones || '';
+    }
+    document.getElementById('edit-payment-modal').classList.remove('hidden');
+}
+
+function closeEditarPagoModal() {
+    const modal = document.getElementById('edit-payment-modal');
+    if (!modal || !pagoAEditarForm) {
+        return;
+    }
+    modal.classList.add('hidden');
+    pagoAEditarForm.reset();
+}
+
+function showEliminarPagoModal(button) {
+    if (!deletePaymentForm || !button) {
+        return;
+    }
+    const url = button.getAttribute('data-delete-url');
+    deletePaymentForm.action = url;
+    document.getElementById('delete-payment-modal').classList.remove('hidden');
+}
+
+function closeEliminarPagoModal() {
+    const modal = document.getElementById('delete-payment-modal');
+    if (modal) {
+        modal.classList.add('hidden');
+    }
+}
+</script>
+{% endblock %}

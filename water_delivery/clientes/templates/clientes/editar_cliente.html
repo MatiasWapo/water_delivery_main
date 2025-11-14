@@ -1,0 +1,556 @@
+{% extends 'base.html' %}
+{% load static %}
+{% load widget_tweaks %}
+
+{% block title %}Editar Cliente - {{ cliente.nombre }} {{ cliente.apellido }}{% endblock %}
+
+{% block content %}
+<div class="min-h-screen bg-gray-50 py-4 sm:py-6">
+    <div class="max-w-7xl mx-auto px-2 sm:px-4 md:px-6 lg:px-8">
+        {# Header: icono, título y acciones principales (ver historial, volver) #}
+        <div class="bg-white rounded-xl shadow-sm p-4 sm:p-6 mb-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="edit-icon flex items-center justify-center">
+                    <i class="fas fa-user-edit"></i>
+                </div>
+                <div>
+                    <h4 class="mb-0 text-agua-dark font-bold text-lg sm:text-xl">Editar Cliente</h4>
+                    <small class="text-gray-500">Modifica la información del cliente</small>
+                </div>
+            </div>
+            <div class="flex gap-2 mt-4 sm:mt-0">
+                <a href="{% url 'clientes:detalle_cliente' cliente.pk %}" class="px-4 py-2 rounded bg-agua-light text-agua-dark font-semibold shadow hover:bg-agua-blue hover:text-white transition flex items-center text-sm sm:text-base">
+                    <i class="fas fa-eye me-1"></i> Ver Historial
+                </a>
+                <a href="{% url 'clientes:lista_clientes' %}" class="px-4 py-2 rounded bg-agua-blue text-white font-semibold shadow hover:bg-agua-dark transition flex items-center text-sm sm:text-base">
+                    <i class="fas fa-arrow-left me-1"></i> Volver
+                </a>
+            </div>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            {# Formulario de edición: nombre, apellido, teléfono, dirección, precio, estado #}
+            <div class="md:col-span-2">
+                <div class="bg-white rounded-xl shadow-sm p-4 mb-4">
+                    <h5 class="mb-4 text-agua-dark font-bold flex items-center text-base sm:text-lg">
+                        <i class="fas fa-edit me-2"></i> Información del Cliente
+                    </h5>
+                    <form method="post" class="edit-form" action="{% url 'clientes:editar_cliente' cliente.pk %}" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                            <div>
+                                <label for="id_nombre" class="block font-semibold text-agua-dark mb-1 text-xs sm:text-sm">
+                                    <i class="fas fa-user me-2 text-agua-blue"></i> Nombre *
+                                </label>
+                                <input type="text" class="form-control w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-agua-blue focus:border-transparent transition-all duration-200" id="id_nombre" name="nombre" value="{{ cliente.nombre }}" required>
+                            </div>
+                            <div>
+                                <label for="id_apellido" class="block font-semibold text-agua-dark mb-1 text-xs sm:text-sm">
+                                    <i class="fas fa-user me-2 text-agua-blue"></i> Apellido *
+                                </label>
+                                <input type="text" class="form-control w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-agua-blue focus:border-transparent transition-all duration-200" id="id_apellido" name="apellido" value="{{ cliente.apellido }}" required>
+                            </div>
+                        </div>
+                        <div class="mt-4">
+                            <label for="id_telefono" class="block font-semibold text-agua-dark mb-1 text-xs sm:text-sm">
+                                <i class="fas fa-phone me-2 text-agua-blue"></i> Teléfono
+                            </label>
+                            <input type="tel" class="form-control w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-agua-blue focus:border-transparent transition-all duration-200" id="id_telefono" name="telefono" value="{{ cliente.telefono }}" placeholder="Ej: +1234567890">
+                        </div>
+                        <div class="mt-4">
+                            <label for="id_direccion" class="block font-semibold text-agua-dark mb-1 text-xs sm:text-sm">
+                                <i class="fas fa-map-marker-alt me-2 text-agua-blue"></i> Dirección *
+                            </label>
+                            <textarea class="form-control w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-agua-blue focus:border-transparent transition-all duration-200 resize-none" id="id_direccion" name="direccion" rows="3" required placeholder="Dirección completa del cliente">{{ cliente.direccion }}</textarea>
+                        </div>
+                        <div class="mt-4">
+                            <label for="id_precio_botellon" class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
+                                <i class="fas fa-dollar-sign mr-2 text-green-500"></i>
+                                Precio del botellón ($) *
+                            </label>
+                            <input type="number" 
+                                   id="id_precio_botellon" 
+                                   name="precio_botellon" 
+                                   value="{% if form.initial.precio_botellon %}{{ form.initial.precio_botellon }}{% elif form.precio_botellon.value %}{{ form.precio_botellon.value }}{% elif cliente.precio_botellon %}{{ cliente.precio_botellon }}{% else %}2.50{% endif %}" 
+                                   step="0.5" 
+                                   min="0" 
+                                   pattern="^\d+(\.5)?$" 
+                                   title="Solo números enteros o con .5 (ej: 2, 2.5, 3, 3.5)"
+                                   class="form-control w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-agua-blue focus:border-transparent transition-all duration-200"
+                                   required>
+                            {% if form.precio_botellon.errors %}
+                                <div class="text-red-500 text-xs mt-1">
+                                    {% for error in form.precio_botellon.errors %}
+                                        {{ error }}
+                                    {% endfor %}
+                                </div>
+                            {% endif %}
+                            <p class="text-xs text-gray-500 mt-1">Puedes modificar el precio si el cliente cambia de tarifa. (Incrementos de $0.50)</p>
+                        </div>
+                        <div class="mt-4">
+                            <div class="flex items-center gap-2">
+                                <input class="form-check-input" type="checkbox" id="id_activo" name="activo" {% if cliente.activo %}checked{% endif %}>
+                                <label class="form-check-label font-semibold text-xs sm:text-sm" for="id_activo">
+                                    <i class="fas fa-toggle-on me-2 text-success"></i> Cliente Activo
+                                </label>
+                            </div>
+                            <small class="text-gray-400 block mt-1">Desmarcar para deshabilitar el cliente sin eliminarlo</small>
+                        </div>
+                        {% if form.non_field_errors %}
+                            <div class="bg-red-50 border-l-4 border-red-500 p-4 mb-4">
+                                <div class="flex">
+                                    <div class="flex-shrink-0">
+                                        <i class="fas fa-exclamation-circle text-red-500"></i>
+                                    </div>
+                                    <div class="ml-3">
+                                        <p class="text-sm text-red-700">
+                                            {% for error in form.non_field_errors %}
+                                                {{ error }}
+                                            {% endfor %}
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        {% endif %}
+                        <div class="form-actions flex flex-col sm:flex-row gap-3 mt-6">
+                            <button type="submit" id="submit-btn" class="btn-agua-blue w-full sm:w-auto px-4 py-3 text-base font-semibold flex items-center justify-center">
+                                <i class="fas fa-save me-2"></i> Guardar Cambios
+                            </button>
+                            <a href="{% url 'clientes:detalle_cliente' cliente.pk %}" class="btn bg-gray-200 text-agua-dark w-full sm:w-auto px-4 py-3 rounded-lg font-semibold flex items-center justify-center hover:bg-gray-300 transition">
+                                <i class="fas fa-times me-2"></i> Cancelar
+                            </a>
+                        </div>
+                    </form>
+                    <script>
+                        document.addEventListener('DOMContentLoaded', function() {
+                            const form = document.querySelector('.edit-form');
+                            if (!form) return;
+                            
+                            const submitBtn = document.getElementById('submit-btn');
+                            const csrftoken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+                            
+                            // Función para mostrar errores
+                            function showError(field, message) {
+                                let errorDiv = field.nextElementSibling;
+                                if (!errorDiv || !errorDiv.classList.contains('error-message')) {
+                                    errorDiv = document.createElement('div');
+                                    errorDiv.className = 'text-red-500 text-xs mt-1 error-message';
+                                    field.parentNode.insertBefore(errorDiv, field.nextSibling);
+                                }
+                                errorDiv.textContent = message;
+                                field.classList.add('border-red-500');
+                            }
+                            
+                            // Función para limpiar errores
+                            function clearError(field) {
+                                field.classList.remove('border-red-500');
+                                const errorDiv = field.nextElementSibling;
+                                if (errorDiv && errorDiv.classList.contains('error-message')) {
+                                    errorDiv.remove();
+                                }
+                            }
+                            
+                            // Validación en tiempo real
+                            form.querySelectorAll('input[required], textarea[required]').forEach(field => {
+                                field.addEventListener('blur', function() {
+                                    if (!this.value.trim()) {
+                                        showError(this, 'Este campo es obligatorio');
+                                    } else {
+                                        clearError(this);
+                                    }
+                                });
+                                
+                                field.addEventListener('input', function() {
+                                    if (this.value.trim()) {
+                                        clearError(this);
+                                    }
+                                });
+                            });
+                            
+                            // Validación del precio
+                            const precioInput = document.getElementById('id_precio_botellon');
+                            if (precioInput) {
+                                precioInput.addEventListener('blur', function() {
+                                    const value = parseFloat(this.value);
+                                    if (isNaN(value) || value < 0) {
+                                        showError(this, 'Ingrese un precio válido (ej: 2.50)');
+                                    } else if ((value * 10) % 5 !== 0) {
+                                        showError(this, 'El precio debe ser múltiplo de 0.50');
+                                    } else {
+                                        clearError(this);
+                                        this.value = value.toFixed(2);
+                                    }
+                                });
+                            }
+                            
+                            // Función para mostrar errores del servidor
+                            function showServerErrors(errors) {
+                                // Limpiar errores anteriores
+                                document.querySelectorAll('.error-message').forEach(el => el.remove());
+                                document.querySelectorAll('.border-red-500').forEach(el => 
+                                    el.classList.remove('border-red-500')
+                                );
+                                
+                                // Mostrar nuevos errores
+                                if (typeof errors === 'object') {
+                                    Object.entries(errors).forEach(([field, message]) => {
+                                        const input = form.querySelector(`[name="${field}"]`);
+                                        if (input) {
+                                            showError(input, Array.isArray(message) ? message[0] : message);
+                                        }
+                                    });
+                                }
+                                
+                                // Desplazarse al primer error
+                                const firstError = form.querySelector('.border-red-500');
+                                if (firstError) {
+                                    firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                }
+                            }
+                            
+                            // Envío del formulario
+                            form.addEventListener('submit', async function(e) {
+                                e.preventDefault();
+                                console.log('Iniciando envío del formulario');
+                                
+                                // Validar campos requeridos
+                                let isValid = true;
+                                form.querySelectorAll('[required]').forEach(field => {
+                                    if (!field.value.trim()) {
+                                        showError(field, 'Este campo es obligatorio');
+                                        isValid = false;
+                                    }
+                                });
+                                
+                                // Validar precio
+                                if (precioInput) {
+                                    const value = parseFloat(precioInput.value);
+                                    if (isNaN(value) || value < 0) {
+                                        showError(precioInput, 'Ingrese un precio válido (ej: 2.50)');
+                                        isValid = false;
+                                    } else if ((value * 100) % 5 !== 0) {
+                                        showError(precioInput, 'El precio debe ser múltiplo de 0.05 (ej: 2.50, 2.55)');
+                                        isValid = false;
+                                    } else {
+                                        precioInput.value = value.toFixed(2);
+                                    }
+                                }
+                                
+                                if (!isValid) {
+                                    // Desplazarse al primer error
+                                    const firstError = form.querySelector('.border-red-500');
+                                    if (firstError) {
+                                        firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                                    }
+                                    return false;
+                                }
+                                
+                                // Deshabilitar botón
+                                if (submitBtn) {
+                                    submitBtn.disabled = true;
+                                    submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-2"></i> Guardando...';
+                                    submitBtn.classList.add('opacity-75', 'cursor-not-allowed');
+                                }
+                                
+                                try {
+                                    const formData = new FormData(form);
+                                    console.log('Enviando datos del formulario:', Object.fromEntries(formData.entries()));
+                                    
+                                    const response = await fetch(form.action, {
+                                        method: 'POST',
+                                        headers: {
+                                            'X-CSRFToken': csrftoken,
+                                            'X-Requested-With': 'XMLHttpRequest',
+                                            'Accept': 'application/json'
+                                        },
+                                        body: formData
+                                    });
+                                    
+                                    console.log('Respuesta del servidor:', response.status);
+                                    
+                                    if (response.status === 400) {
+                                        // Manejar errores de validación
+                                        const data = await response.json();
+                                        console.log('Errores de validación:', data);
+                                        showServerErrors(data.errors || data);
+                                        
+                                        if (submitBtn) {
+                                            submitBtn.disabled = false;
+                                            submitBtn.innerHTML = '<i class="fas fa-save me-2"></i> Guardar Cambios';
+                                            submitBtn.classList.remove('opacity-75', 'cursor-not-allowed');
+                                        }
+                                        
+                                        // Mostrar mensaje de error general si existe
+                                        if (data.error) {
+                                            alert(data.error);
+                                        }
+                                        
+                                        return;
+                                    }
+                                    
+                                    if (!response.ok) {
+                                        throw new Error('Error en la respuesta del servidor');
+                                    }
+                                    
+                                    const data = await response.json();
+                                    console.log('Respuesta exitosa:', data);
+                                    
+                                    if (data.success) {
+                                        // Redirigir a la página de detalle del cliente
+                                        window.location.href = data.redirect_url || '{% url "clientes:detalle_cliente" cliente.pk %}';
+                                    } else {
+                                        // Mostrar errores del servidor
+                                        showServerErrors(data.errors || data);
+                                        if (submitBtn) {
+                                            submitBtn.disabled = false;
+                                            submitBtn.innerHTML = '<i class="fas fa-save me-2"></i> Guardar Cambios';
+                                            submitBtn.classList.remove('opacity-75', 'cursor-not-allowed');
+                                        }
+                                        
+                                        if (data.error) {
+                                            alert(data.error);
+                                        }
+                                    }
+                                } catch (error) {
+                                    console.error('Error al enviar el formulario:', error);
+                                    alert('Error de conexión. Por favor, intente nuevamente.');
+                                    
+                                    if (submitBtn) {
+                                        submitBtn.disabled = false;
+                                        submitBtn.innerHTML = '<i class="fas fa-save me-2"></i> Guardar Cambios';
+                                        submitBtn.classList.remove('opacity-75', 'cursor-not-allowed');
+                                    }
+                                }
+                            });
+                        });
+                    </script>
+                </div>
+            </div>
+            {# Panel lateral: información actual y acciones rápidas (ver historial, nuevo despacho, habilitar/deshabilitar) #}
+            <div>
+                <div class="bg-agua-light rounded-xl shadow-sm mb-4 p-4">
+                    <h6 class="mb-4 text-agua-dark font-bold flex items-center text-base">
+                        <i class="fas fa-info-circle me-2"></i> Información Actual
+                    </h6>
+                    <div class="current-info space-y-3">
+                        <div class="flex items-center gap-2">
+                            <div class="mini-avatar flex items-center justify-center">{{ cliente.nombre|first }}{{ cliente.apellido|first }}</div>
+                            <span class="font-semibold">{{ cliente.nombre }} {{ cliente.apellido }}</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-semibold text-gray-500 uppercase">ID:</span>
+                            <span>#{{ cliente.id|stringformat:"04d" }}</span>
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-semibold text-gray-500 uppercase">Estado:</span>
+                            {% if cliente.activo %}
+                                <span class="inline-block bg-green-100 text-green-800 px-3 py-1 rounded-full text-xs font-bold">Activo</span>
+                            {% else %}
+                                <span class="inline-block bg-yellow-100 text-yellow-800 px-3 py-1 rounded-full text-xs font-bold">Inactivo</span>
+                            {% endif %}
+                        </div>
+                        <div class="flex items-center gap-2">
+                            <span class="text-xs font-semibold text-gray-500 uppercase">Deuda:</span>
+                            {% if cliente.debe_total > 0 %}
+                                <span class="text-yellow-700 font-bold">{{ cliente.debe_total }} bot.</span>
+                            {% else %}
+                                <span class="text-green-700 font-bold">Al día</span>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+                <!-- Acciones rápidas -->
+                <div class="bg-white rounded-xl shadow-sm p-4">
+                    <h6 class="mb-4 text-agua-dark font-bold flex items-center text-base">
+                        <i class="fas fa-bolt me-2"></i> Acciones Rápidas
+                    </h6>
+                    <div class="flex flex-col gap-2">
+                        <a href="{% url 'clientes:detalle_cliente' cliente.pk %}" class="btn bg-agua-light text-agua-dark font-semibold flex items-center justify-center gap-2 py-2 rounded-lg hover:bg-agua-blue hover:text-white transition">
+                            <i class="fas fa-history me-2"></i> Ver Historial Completo
+                        </a>
+                        <a href="{% url 'clientes:nuevo_despacho' %}" class="btn bg-green-100 text-green-800 font-semibold flex items-center justify-center gap-2 py-2 rounded-lg hover:bg-green-200 transition">
+                            <i class="fas fa-plus me-2"></i> Nuevo Despacho
+                        </a>
+                        <a href="{% url 'clientes:toggle_cliente_status' cliente.pk %}"
+                           class="btn bg-yellow-100 text-yellow-800 font-semibold flex items-center justify-center gap-2 py-2 rounded-lg hover:bg-yellow-200 transition"
+                           onclick="return showConfirmEstado(this, event)">
+                            <i class="fas fa-toggle-off me-2"></i> {% if cliente.activo %}Deshabilitar{% else %}Habilitar{% endif %}
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{# Modal de confirmación para cambiar estado del cliente #}
+<div id="confirm-estado-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 hidden">
+  <div class="bg-white rounded-lg shadow-lg p-6 w-11/12 max-w-sm">
+    <div class="flex items-center mb-4">
+      <div class="bg-yellow-400 text-white rounded-full p-2 mr-3">
+        <i class="fas fa-exclamation-triangle text-xl"></i>
+      </div>
+      <h3 class="text-lg font-bold text-yellow-700" id="confirm-estado-title">Confirmar acción</h3>
+    </div>
+    <p class="text-gray-700 mb-6" id="confirm-estado-message">¿Estás seguro de que deseas cambiar el estado de este cliente?</p>
+    <div class="flex justify-end gap-2">
+      <button onclick="closeConfirmEstado()" class="px-4 py-2 rounded bg-gray-200 text-gray-700 hover:bg-gray-300">Cancelar</button>
+      <a id="confirm-estado-accept" href="#" class="px-4 py-2 rounded bg-yellow-400 text-white hover:bg-yellow-600 font-semibold transition">Sí, continuar</a>
+    </div>
+  </div>
+</div>
+
+{# Estilos específicos para la página de edición de cliente #}
+<style>
+:root {
+    --agua-blue: #0891b2;
+    --agua-dark: #164e63;
+    --agua-light: #a5f3fc;
+    --agua-light-bg: #ecfeff;
+    --agua-gradient: linear-gradient(135deg, #0891b2, #0e7490, #164e63);
+}
+
+.edit-icon {
+    width: 60px;
+    height: 60px;
+    background: var(--agua-light-bg);
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 24px;
+    color: var(--agua-blue);
+}
+
+.edit-form .form-label {
+    font-weight: 600;
+    color: var(--agua-dark);
+    margin-bottom: 0.5rem;
+}
+
+.edit-form .form-control {
+    border: 2px solid #e2e8f0;
+    border-radius: 10px;
+    padding: 12px 16px;
+    transition: all 0.3s ease;
+}
+
+.edit-form .form-control:focus {
+    border-color: var(--agua-blue);
+    box-shadow: 0 0 0 3px rgba(8, 145, 178, 0.1);
+}
+
+.form-check-input:checked {
+    background-color: var(--agua-blue);
+    border-color: var(--agua-blue);
+}
+
+.btn-agua-blue {
+    background: var(--agua-gradient);
+    border: none;
+    color: white;
+    font-weight: 600;
+    border-radius: 10px;
+    transition: all 0.3s ease;
+}
+
+.btn-agua-blue:hover {
+    background: linear-gradient(135deg, #0e7490, #164e63);
+    color: white;
+    transform: translateY(-1px);
+}
+
+.bg-agua-light {
+    background-color: var(--agua-light-bg);
+}
+
+.text-agua-blue { color: var(--agua-blue); }
+.text-agua-dark { color: var(--agua-dark); }
+
+.current-info .info-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0.5rem 0;
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.current-info .info-row:last-child {
+    border-bottom: none;
+}
+
+.current-info label {
+    font-size: 12px;
+    font-weight: 600;
+    color: #64748b;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.mini-avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    background: var(--agua-gradient);
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    font-weight: 700;
+    text-transform: uppercase;
+}
+
+@media (max-width: 768px) {
+    .edit-icon {
+        width: 50px;
+        height: 50px;
+        font-size: 20px;
+    }
+    
+    .form-actions {
+        flex-direction: column;
+    }
+    
+    .form-actions .btn {
+        width: 100%;
+    }
+}
+</style>
+
+{# Scripts JS: auto-focus, validación en tiempo real, lógica del modal de confirmación #}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Auto-focus en el primer campo
+    const firstInput = document.querySelector('#id_nombre');
+    if (firstInput) {
+        firstInput.focus();
+    }
+    
+    // Validación en tiempo real
+    const form = document.querySelector('.edit-form');
+    const inputs = form.querySelectorAll('input[required], textarea[required]');
+    
+    inputs.forEach(input => {
+        input.addEventListener('blur', function() {
+            if (this.value.trim() === '') {
+                this.classList.add('is-invalid');
+            } else {
+                this.classList.remove('is-invalid');
+                this.classList.add('is-valid');
+            }
+        });
+    });
+});
+
+function showConfirmEstado(link, event) {
+  event.preventDefault();
+  const modal = document.getElementById('confirm-estado-modal');
+  const acceptBtn = document.getElementById('confirm-estado-accept');
+  acceptBtn.href = link.href;
+  modal.classList.remove('hidden');
+  return false;
+}
+function closeConfirmEstado() {
+  document.getElementById('confirm-estado-modal').classList.add('hidden');
+}
+</script>
+{% endblock %}

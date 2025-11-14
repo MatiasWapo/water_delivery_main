@@ -1,0 +1,136 @@
+# =============================================
+# CONFIGURACIÓN DE ENTORNO - EJEMPLO
+# =============================================
+# Copia este archivo como .env y configura tus valores
+# NO subas el archivo .env real al repositorio
+#
+# Para generar una nueva SECRET_KEY, puedes usar:
+# python -c 'from django.core.management.utils import get_random_secret_key; print(get_random_secret_key())'
+
+# =====================
+# CONFIGURACIÓN BÁSICA
+# =====================
+# Clave secreta para firmar datos. ¡Mantener en secreto!
+SECRET_KEY=tu-clave-secreta-muy-segura-aqui
+
+# Modo depuración (usar True en desarrollo, False en producción)
+DEBUG=True
+
+# Hosts permitidos (separados por comas)
+ALLOWED_HOSTS=matiaserver.click,www.matiaserver.click,inversioneslos2ramirez.matiaserver.click,84.247.168.85,localhost,127.0.0.1
+
+# Orígenes confiables para CSRF (usar HTTPS)
+CSRF_TRUSTED_ORIGINS=https://matiaserver.click,https://www.matiaserver.click,https://inversioneslos2ramirez.matiaserver.click,https://84.247.168.85,http://localhost:8000
+
+# =====================
+# BASE DE DATOS
+# =====================
+# Opción 1: Usar DATABASE_URL (recomendado para producción)
+# Formato: postgres://usuario:contraseña@host:puerto/nombre_db
+# Ejemplo: postgres://usuario:contraseña@localhost:5432/water_delivery
+DATABASE_URL=postgresql://usuario:contraseña@host:puerto/nombre_db
+
+# Opción 2: Configuración individual (para desarrollo local)
+DB_NAME=water_delivery_db
+DB_USER=postgres
+DB_PASSWORD=tu_contraseña_segura
+DB_HOST=localhost
+DB_PORT=5432
+
+# =====================
+# ARCHIVOS ESTÁTICOS Y MEDIA
+# =====================
+# URL base para archivos estáticos
+STATIC_URL=/static/
+
+# URL base para archivos subidos por usuarios
+MEDIA_URL=/media/
+
+# Ruta relativa donde se guardarán los archivos subidos (desarrollo)
+# En producción se usará una ruta absoluta
+MEDIA_ROOT=media/
+
+# =====================
+# CONFIGURACIÓN DE SEGURIDAD
+# =====================
+# Configuración de cookies seguras (False en desarrollo, True en producción)
+SESSION_COOKIE_SECURE=False
+CSRF_COOKIE_SECURE=False
+SESSION_COOKIE_HTTPONLY=True
+CSRF_COOKIE_HTTPONLY=True
+
+# Redirección HTTPS (False en desarrollo, True en producción)
+SECURE_SSL_REDIRECT=False
+
+# Configuración HSTS (HTTP Strict Transport Security) - Solo para producción
+# En desarrollo, mantener en 0 para evitar problemas con HTTP
+SECURE_HSTS_SECONDS=0
+SECURE_HSTS_INCLUDE_SUBDOMAINS=False
+SECURE_HSTS_PRELOAD=False
+
+# Otras configuraciones de seguridad
+SECURE_CONTENT_TYPE_NOSNIFF=True
+SECURE_BROWSER_XSS_FILTER=True
+X_FRAME_OPTIONS=DENY
+
+# Prevenir clickjacking
+SECURE_REFERRER_POLICY=same-origin
+
+# Configuración de proxy
+SECURE_PROXY_SSL_HEADER=HTTP_X_FORWARDED_PROTO,https
+
+# =====================
+# CONFIGURACIÓN DE CORS
+# =====================
+# Orígenes permitidos para CORS (separados por comas)
+CORS_ALLOWED_ORIGINS=https://tudominio.com,https://www.tudominio.com
+
+# =====================
+# CONFIGURACIÓN DE CORREO
+# =====================
+# Configuración SMTP para correos
+EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
+EMAIL_HOST=smtp.gmail.com
+EMAIL_PORT=587
+EMAIL_USE_TLS=True
+EMAIL_HOST_USER=tu-email@gmail.com
+EMAIL_HOST_PASSWORD=tu-contraseña-de-app
+DEFAULT_FROM_EMAIL=tu-email@gmail.com
+SERVER_EMAIL=tu-email@gmail.com
+
+# Email del administrador para notificaciones
+ADMIN_EMAIL=admin@tudominio.com
+
+# =====================
+# CONFIGURACIÓN DE CACHÉ (Redis)
+# =====================
+# URL de conexión a Redis (opcional, necesario para caché y sesiones)
+REDIS_URL=redis://localhost:6379/0
+
+# =====================
+# CONFIGURACIÓN DE SESIÓN
+# =====================
+# Tiempo de vida de la sesión en segundos (2 semanas por defecto)
+SESSION_COOKIE_AGE=1209600
+
+# =====================
+# CONFIGURACIÓN DE SEGURIDAD AVANZADA
+# =====================
+# Lista de hosts/dominios que pueden establecer conexiones inseguras (solo desarrollo)
+CSRF_TRUSTED_ORIGINS=http://localhost:8000,http://127.0.0.1:8000
+
+# Configuración de seguridad para cookies
+SESSION_COOKIE_SAMESITE=Lax
+CSRF_COOKIE_SAMESITE=Lax
+
+# =====================
+# CONFIGURACIÓN DE LOGGING
+# =====================
+# Nivel de logging (DEBUG, INFO, WARNING, ERROR, CRITICAL)
+LOG_LEVEL=WARNING
+
+# =====================
+# OTRAS CONFIGURACIONES
+# =====================
+# Tiempo de espera para restablecimiento de contraseña (segundos)
+PASSWORD_RESET_TIMEOUT=86400  # 24 horas

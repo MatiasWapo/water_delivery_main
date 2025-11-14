@@ -1,0 +1,298 @@
+{% extends 'base.html' %}
+
+{% block title %}{% if object %}Editar Cliente{% else %}Nuevo Cliente{% endif %}{% endblock %}
+
+{% block content %}
+<h1 class="text-2xl font-bold text-agua-dark mb-6">{% if object %}Editar Cliente{% else %}Nuevo Cliente{% endif %}</h1>
+<form method="post" class="bg-white rounded-xl shadow-lg p-4 max-w-md mx-auto space-y-4" id="cliente-form">
+    {% csrf_token %}
+    
+    <!-- Campo Nombre -->
+    <div>
+        <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
+            <i class="fas fa-user mr-2 text-blue-500"></i>
+            Nombre *
+        </label>
+        {{ form.nombre }}
+        <div id="nombre-error" class="text-red-500 text-xs mt-1 hidden"></div>
+        {% if form.nombre.errors %}
+            <p class="text-red-500 text-xs mt-1">{{ form.nombre.errors.0 }}</p>
+        {% endif %}
+    </div>
+    
+    <!-- Campo Apellido -->
+    <div>
+        <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
+            <i class="fas fa-user mr-2 text-blue-500"></i>
+            Apellido *
+        </label>
+        {{ form.apellido }}
+        <div id="apellido-error" class="text-red-500 text-xs mt-1 hidden"></div>
+        {% if form.apellido.errors %}
+            <p class="text-red-500 text-xs mt-1">{{ form.apellido.errors.0 }}</p>
+        {% endif %}
+    </div>
+    
+    <!-- Campo Dirección -->
+    <div>
+        <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
+            <i class="fas fa-map-marker-alt mr-2 text-green-500"></i>
+            Dirección *
+        </label>
+        {{ form.direccion }}
+        <div id="direccion-error" class="text-red-500 text-xs mt-1 hidden"></div>
+        {% if form.direccion.errors %}
+            <p class="text-red-500 text-xs mt-1">{{ form.direccion.errors.0 }}</p>
+        {% endif %}
+    </div>
+    
+    <!-- Campo Teléfono -->
+    <div>
+        <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
+            <i class="fas fa-phone mr-2 text-purple-500"></i>
+            Teléfono
+        </label>
+        {{ form.telefono }}
+        <div id="telefono-error" class="text-red-500 text-xs mt-1 hidden"></div>
+        {% if form.telefono.errors %}
+            <p class="text-red-500 text-xs mt-1">{{ form.telefono.errors.0 }}</p>
+        {% endif %}
+    </div>
+    
+    <!-- Campo Precio del Botellón -->
+    <div>
+        <label for="id_precio_botellon" class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
+            <i class="fas fa-dollar-sign mr-2 text-green-500"></i>
+            Precio del botellón ($) *
+        </label>
+        {{ form.precio_botellon }}
+        <div id="precio-error" class="text-red-500 text-xs mt-1 hidden"></div>
+        <p class="text-xs text-gray-500 mt-1">Precio por botellón. Por defecto: $2.50</p>
+        {% if form.precio_botellon.errors %}
+            <p class="text-red-500 text-xs mt-1">{{ form.precio_botellon.errors.0 }}</p>
+        {% endif %}
+    </div>
+    
+    <button type="submit" class="w-full bg-gradient-to-r from-agua-blue to-agua-dark text-white py-3 px-4 rounded-lg font-medium hover:from-agua-dark hover:to-agua-blue focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-agua-blue transition-all duration-200 transform hover:scale-105 shadow-lg text-base">
+        <i class="fas fa-save mr-2"></i>
+        Guardar Cliente
+    </button>
+</form>
+
+<script>
+// Validaciones en tiempo real para el formulario de cliente
+document.addEventListener('DOMContentLoaded', function() {
+    const form = document.getElementById('cliente-form');
+    const nombreInput = document.getElementById('id_nombre');
+    const apellidoInput = document.getElementById('id_apellido');
+    const direccionInput = document.getElementById('id_direccion');
+    const telefonoInput = document.getElementById('id_telefono');
+    const precioInput = document.getElementById('id_precio_botellon');
+    
+    // Función para mostrar errores
+    function showError(elementId, message) {
+        const errorDiv = document.getElementById(elementId);
+        errorDiv.textContent = message;
+        errorDiv.classList.remove('hidden');
+    }
+    
+    // Función para ocultar errores
+    function hideError(elementId) {
+        const errorDiv = document.getElementById(elementId);
+        errorDiv.classList.add('hidden');
+    }
+    
+    // Validación de nombre
+    if (nombreInput) {
+        nombreInput.addEventListener('input', function() {
+            const value = this.value.trim();
+            
+            if (value.length === 0) {
+                showError('nombre-error', 'El nombre es obligatorio.');
+                this.classList.add('border-red-500');
+                this.classList.remove('border-green-500');
+            } else if (value.length < 2) {
+                showError('nombre-error', 'El nombre debe tener al menos 2 caracteres.');
+                this.classList.add('border-red-500');
+                this.classList.remove('border-green-500');
+            } else if (value.length > 50) {
+                showError('nombre-error', 'El nombre no puede tener más de 50 caracteres.');
+                this.classList.add('border-red-500');
+                this.classList.remove('border-green-500');
+            } else if (!/^[A-Za-záéíóúÁÉÍÓÚñÑ\s]+$/.test(value)) {
+                showError('nombre-error', 'El nombre solo puede contener letras y espacios.');
+                this.classList.add('border-red-500');
+                this.classList.remove('border-green-500');
+            } else {
+                hideError('nombre-error');
+                this.classList.remove('border-red-500');
+                this.classList.add('border-green-500');
+            }
+        });
+    }
+    
+    // Validación de apellido
+    if (apellidoInput) {
+        apellidoInput.addEventListener('input', function() {
+            const value = this.value.trim();
+            
+            if (value.length === 0) {
+                showError('apellido-error', 'El apellido es obligatorio.');
+                this.classList.add('border-red-500');
+                this.classList.remove('border-green-500');
+            } else if (value.length < 2) {
+                showError('apellido-error', 'El apellido debe tener al menos 2 caracteres.');
+                this.classList.add('border-red-500');
+                this.classList.remove('border-green-500');
+            } else if (value.length > 50) {
+                showError('apellido-error', 'El apellido no puede tener más de 50 caracteres.');
+                this.classList.add('border-red-500');
+                this.classList.remove('border-green-500');
+            } else if (!/^[A-Za-záéíóúÁÉÍÓÚñÑ\s]+$/.test(value)) {
+                showError('apellido-error', 'El apellido solo puede contener letras y espacios.');
+                this.classList.add('border-red-500');
+                this.classList.remove('border-green-500');
+            } else {
+                hideError('apellido-error');
+                this.classList.remove('border-red-500');
+                this.classList.add('border-green-500');
+            }
+        });
+    }
+    
+    // Validación de dirección
+    if (direccionInput) {
+        direccionInput.addEventListener('input', function() {
+            const value = this.value.trim();
+            
+            if (value.length === 0) {
+                showError('direccion-error', 'La dirección es obligatoria.');
+                this.classList.add('border-red-500');
+                this.classList.remove('border-green-500');
+            } else if (value.length < 10) {
+                showError('direccion-error', 'La dirección debe tener al menos 10 caracteres.');
+                this.classList.add('border-red-500');
+                this.classList.remove('border-green-500');
+            } else if (value.length > 200) {
+                showError('direccion-error', 'La dirección no puede tener más de 200 caracteres.');
+                this.classList.add('border-red-500');
+                this.classList.remove('border-green-500');
+            } else {
+                hideError('direccion-error');
+                this.classList.remove('border-red-500');
+                this.classList.add('border-green-500');
+            }
+        });
+    }
+    
+    // Validación de teléfono
+    if (telefonoInput) {
+        telefonoInput.addEventListener('input', function() {
+            const value = this.value.trim();
+            
+            if (value.length === 0) {
+                hideError('telefono-error');
+                this.classList.remove('border-red-500', 'border-green-500');
+                return; // Teléfono es opcional
+            }
+            
+            if (value.length > 13) {
+                showError('telefono-error', 'El teléfono no puede tener más de 13 caracteres.');
+                this.classList.add('border-red-500');
+                this.classList.remove('border-green-500');
+            } else if (!/^[0-9+\-\s()]+$/.test(value)) {
+                showError('telefono-error', 'El teléfono solo puede contener números, espacios, guiones, paréntesis y +.');
+                this.classList.add('border-red-500');
+                this.classList.remove('border-green-500');
+            } else {
+                const digitos = value.match(/\d/g);
+                if (digitos && digitos.length < 7) {
+                    showError('telefono-error', 'El teléfono debe tener al menos 7 dígitos.');
+                    this.classList.add('border-red-500');
+                    this.classList.remove('border-green-500');
+                } else if (digitos && digitos.length > 11) {
+                    showError('telefono-error', 'El teléfono no puede tener más de 11 dígitos.');
+                    this.classList.add('border-red-500');
+                    this.classList.remove('border-green-500');
+                } else {
+                    hideError('telefono-error');
+                    this.classList.remove('border-red-500');
+                    this.classList.add('border-green-500');
+                }
+            }
+        });
+    }
+    
+    // Validación de precio
+    if (precioInput) {
+        precioInput.addEventListener('input', function() {
+            let value = this.value.replace(',', '.');
+            this.value = value;
+            
+            if (value.length === 0) {
+                hideError('precio-error');
+                this.classList.remove('border-red-500', 'border-green-500');
+                return;
+            }
+            
+            const precio = parseFloat(value);
+            
+            if (isNaN(precio)) {
+                showError('precio-error', 'El precio debe ser un número válido.');
+                this.classList.add('border-red-500');
+                this.classList.remove('border-green-500');
+            } else if (precio < 0) {
+                showError('precio-error', 'El precio no puede ser negativo.');
+                this.classList.add('border-red-500');
+                this.classList.remove('border-green-500');
+            } else if (precio > 999.99) {
+                showError('precio-error', 'El precio no puede ser mayor a $999.99.');
+                this.classList.add('border-red-500');
+                this.classList.remove('border-green-500');
+            } else {
+                hideError('precio-error');
+                this.classList.remove('border-red-500');
+                this.classList.add('border-green-500');
+            }
+        });
+    }
+    
+    // Validación del formulario antes de enviar
+    form.addEventListener('submit', function(e) {
+        let hasErrors = false;
+        
+        // Validar nombre
+        if (nombreInput && nombreInput.value.trim().length < 2) {
+            showError('nombre-error', 'El nombre debe tener al menos 2 caracteres.');
+            hasErrors = true;
+        }
+        
+        // Validar apellido
+        if (apellidoInput && apellidoInput.value.trim().length < 2) {
+            showError('apellido-error', 'El apellido debe tener al menos 2 caracteres.');
+            hasErrors = true;
+        }
+        
+        // Validar dirección
+        if (direccionInput && direccionInput.value.trim().length < 10) {
+            showError('direccion-error', 'La dirección debe tener al menos 10 caracteres.');
+            hasErrors = true;
+        }
+        
+        // Validar precio
+        if (precioInput) {
+            const precio = parseFloat(precioInput.value.replace(',', '.'));
+            if (isNaN(precio) || precio < 0 || precio > 999.99) {
+                showError('precio-error', 'El precio debe ser un número válido entre 0 y 999.99.');
+                hasErrors = true;
+            }
+        }
+        
+        if (hasErrors) {
+            e.preventDefault();
+            alert('Por favor, corrige los errores antes de enviar el formulario.');
+        }
+    });
+});
+</script>
+{% endblock %}
